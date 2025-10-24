@@ -1,22 +1,31 @@
-import 'package:json_stream_parser/classes/property_stream.dart';
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
-/// ! WORks too
 void main() async {
-  final string = r'-23582454378,';
+  final String string =
+      r'{"name": "John", "age": 30, "isStudent": false, "scores": [85, 90, 78], "address": {"street": "123 Main St", "city": "Anytown"}}';
   final stream = streamTextInChunks(
     text: string,
-    chunkSize: 100,
+    chunkSize: 10,
     interval: Duration(milliseconds: 50),
   ).asBroadcastStream();
-  stream.listen((chunk) => print("|$chunk|"));
-
-  final textStream = NumberPropertyStream(stream);
-
-  textStream.stream.listen((chunk) => print("CHUNK:\t|$chunk|"));
-  final finalValue = await textStream.future;
-  print(finalValue);
 }
+
+// /// ! WORks too
+// void main() async {
+//   final string = r'-23582454378,';
+//   final stream = streamTextInChunks(
+//     text: string,
+//     chunkSize: 100,
+//     interval: Duration(milliseconds: 50),
+//   ).asBroadcastStream();
+//   stream.listen((chunk) => print("|$chunk|"));
+
+//   final textStream = NumberPropertyStream(stream);
+
+//   textStream.stream.listen((chunk) => print("CHUNK:\t|$chunk|"));
+//   final finalValue = await textStream.future;
+//   print(finalValue);
+// }
 
 
 
