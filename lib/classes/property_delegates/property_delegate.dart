@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_final_fields
+
 import 'dart:async';
 
 import 'package:json_stream_parser/classes/json_stream_parser.dart';
@@ -7,6 +9,7 @@ import 'package:json_stream_parser/classes/mixins.dart';
 abstract class PropertyDelegate with Delegator {
   final String propertyPath;
   final JsonStreamParserController jsonStreamParserController;
+  bool isDone = false;
 
   PropertyDelegate({
     required this.propertyPath,
@@ -25,11 +28,5 @@ abstract class PropertyDelegate with Delegator {
 
   void addCharacter(String character) {
     throw UnimplementedError();
-  }
-
-  final Completer<void> _doneCompleter = Completer<void>();
-  Future<void> get done => _doneCompleter.future;
-  void close() {
-    _doneCompleter.complete();
   }
 }

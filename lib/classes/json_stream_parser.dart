@@ -26,6 +26,9 @@ class JsonStreamParser {
   // * States
 
   // * Helpers
+  void _accumulateCharacter(String character) {}
+  void _addChunkToStream() {}
+
   void _parseChunk(String chunk) {
     for (final character in chunk.split('')) {
       switch (character) {

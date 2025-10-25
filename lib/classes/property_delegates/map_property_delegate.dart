@@ -8,6 +8,8 @@ import 'package:json_stream_parser/classes/property_delegates/property_delegate.
 /// - MIGHT HAVE TO HANDLE LISTS NOW, OR TEST THE PARSER FIRST
 /// - REMEMBER TO UPDATE THE PROPERTY STREAM TO HANDLE GENERIC TYPES (this was autocompleted, do check though)
 /// - You're doing well, goodjob!
+///
+/// Ty!
 
 class MapPropertyDelegate extends PropertyDelegate {
   // * String propertyPath
@@ -23,7 +25,7 @@ class MapPropertyDelegate extends PropertyDelegate {
 
   bool _firstCharacter = true;
   String _keyBuffer = "";
-  PropertyDelegate? _currentValueDelegate;
+  PropertyDelegate? _activeChildDelegate;
 
   @override
   void addCharacter(String character) {
@@ -40,13 +42,17 @@ class MapPropertyDelegate extends PropertyDelegate {
     }
 
     if (_state == MapParseState.readingValue) {
-      _currentValueDelegate?.addCharacter(character);
+      _activeChildDelegate?.addCharacter(character);
+      if (_activeChildDelegate?.isDone ?? false) {
+        _state = MapParseState.waitingForCommaOrEnd;
+        _activeChildDelegate = null;
+      }
       return;
     }
 
     if (_state == MapParseState.waitingForValue) {
       if (character == " ") return;
-      _currentValueDelegate = getDelegateFromCharacter(
+      _activeChildDelegate = getDelegateFromCharacter(
         character,
         propertyPath: propertyPath + _keyBuffer,
         jsonStreamParserController: jsonStreamParserController,
@@ -71,7 +77,7 @@ class MapPropertyDelegate extends PropertyDelegate {
         _keyBuffer = "";
         return;
       } else if (character == '}') {
-        close();
+        isDone = true;
         return;
       }
     }
