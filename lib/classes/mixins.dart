@@ -5,6 +5,7 @@ import 'package:json_stream_parser/classes/property_delegates/map_property_deleg
 import 'package:json_stream_parser/classes/property_delegates/number_property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/string_property_delegate.dart';
+import 'package:json_stream_parser/classes/property_stream.dart';
 
 mixin Delegator {
   PropertyDelegate getDelegateFromCharacter(
@@ -63,6 +64,22 @@ mixin Delegator {
         throw UnimplementedError(
           'No delegate available for character: $character',
         );
+    }
+  }
+}
+
+/// ! You left off trying to determine what would be the interface for the map stream properties and such, so that you could emit values from the delegates
+///
+/// You did really well again, goodjob!
+
+mixin PropertyStreamorator {
+  PropertyStream getPropertyStream<T>() {
+    if (T is String) {
+      return StringPropertyStream();
+    } else if (T is Map) {
+      return MapPropertyStream();
+    } else {
+      throw UnimplementedError('No PropertyStream available for type: $T');
     }
   }
 }

@@ -25,11 +25,19 @@ class MapPropertyDelegate extends PropertyDelegate {
 
   bool _firstCharacter = true;
   String _keyBuffer = "";
+  String _stringBuffer = "";
   PropertyDelegate? _activeChildDelegate;
 
   @override
+  void onChunkEnd() {
+    _activeChildDelegate?.onChunkEnd();
+    emitToStream<String>(_stringBuffer);
+    _stringBuffer = "";
+  }
+
+  @override
   void addCharacter(String character) {
-    emitToStream(character);
+    _stringBuffer += character;
 
     if (_state == MapParseState.readingKey) {
       if (character == '"') {

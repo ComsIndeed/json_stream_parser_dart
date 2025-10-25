@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:json_stream_parser/classes/property_delegates/list_property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/map_property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/property_delegate.dart';
@@ -24,6 +26,7 @@ class JsonStreamParser {
   final Map<String, PropertyStream> _properties = {};
 
   // * States
+  PropertyDelegate? _rootDelegate;
 
   // * Helpers
   void _accumulateCharacter(String character) {}
@@ -38,6 +41,7 @@ class JsonStreamParser {
             jsonStreamParserController: _controller,
           );
           _properties[delegate.propertyPath] = MapPropertyStream();
+          _rootDelegate = delegate;
           break;
         case '[':
           final delegate = ListPropertyDelegate(
@@ -45,11 +49,13 @@ class JsonStreamParser {
             jsonStreamParserController: _controller,
           );
           _properties[delegate.propertyPath] = ListPropertyStream();
+          _rootDelegate = delegate;
           break;
         default:
           break;
       }
     }
+    _rootDelegate?.onChunkEnd();
   }
 }
 
