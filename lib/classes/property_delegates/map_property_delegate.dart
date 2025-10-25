@@ -2,6 +2,13 @@
 
 import 'package:json_stream_parser/classes/property_delegates/property_delegate.dart';
 
+/// ! YOU LEFT OFF AT BUILDING THE MAP PROPERTY DELEGATE !
+///
+/// - JUST FINISHED THE FLAT FLOW OF MAP STREAM PARSING
+/// - MIGHT HAVE TO HANDLE LISTS NOW, OR TEST THE PARSER FIRST
+/// - REMEMBER TO UPDATE THE PROPERTY STREAM TO HANDLE GENERIC TYPES (this was autocompleted, do check though)
+/// - You're doing well, goodjob!
+
 class MapPropertyDelegate extends PropertyDelegate {
   // * String propertyPath
 
