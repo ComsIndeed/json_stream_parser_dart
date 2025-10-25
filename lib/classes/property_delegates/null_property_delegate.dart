@@ -3,6 +3,6 @@ import 'package:json_stream_parser/classes/property_delegates/property_delegate.
 class NullPropertyDelegate extends PropertyDelegate {
   NullPropertyDelegate({
     required super.propertyPath,
-    required super.controller,
+    required super.jsonStreamParserController,
   });
 }

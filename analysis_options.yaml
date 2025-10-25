@@ -12,6 +12,9 @@
 # The core lints are also what is used by pub.dev for scoring packages.
 
 include: package:lints/recommended.yaml
+analyzer:
+  errors:
+    prefer_final_fields: ignore ignore
 
 # Uncomment the following section to specify additional rules.
 

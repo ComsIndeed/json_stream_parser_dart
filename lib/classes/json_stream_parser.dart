@@ -5,6 +5,11 @@ import 'package:json_stream_parser/classes/property_stream.dart';
 
 class JsonStreamParser {
   JsonStreamParser(Stream<String> stream) : _stream = stream {
+    _controller = JsonStreamParserController(
+      getPropertyStream: (String propertyPath) {
+        return _properties[propertyPath] ?? NullPropertyStream();
+      },
+    );
     _stream.listen(_parseChunk);
   }
 
@@ -13,6 +18,7 @@ class JsonStreamParser {
 
   // * Fields
   final Stream<String> _stream;
+  late JsonStreamParserController _controller;
 
   // * Memories
   final Map<String, PropertyStream> _properties = {};
@@ -20,24 +26,22 @@ class JsonStreamParser {
   // * States
 
   // * Helpers
-  final _controller = JsonStreamParserController();
-
   void _parseChunk(String chunk) {
     for (final character in chunk.split('')) {
       switch (character) {
         case '{':
           final delegate = MapPropertyDelegate(
             propertyPath: "",
-            controller: _controller,
+            jsonStreamParserController: _controller,
           );
-          _properties[delegate.propertyPath] = MapPropertyStream(delegate);
+          _properties[delegate.propertyPath] = MapPropertyStream();
           break;
         case '[':
           final delegate = ListPropertyDelegate(
             propertyPath: "",
-            controller: _controller,
+            jsonStreamParserController: _controller,
           );
-          _properties[delegate.propertyPath] = ListPropertyStream(delegate);
+          _properties[delegate.propertyPath] = ListPropertyStream();
           break;
         default:
           break;
@@ -46,4 +50,38 @@ class JsonStreamParser {
   }
 }
 
-class JsonStreamParserController {}
+class JsonStreamParserController {
+  JsonStreamParserController({
+    required PropertyStream Function(String) getPropertyStream,
+  }) : _getPropertyStream = getPropertyStream;
+
+  final PropertyStream Function(String) _getPropertyStream;
+
+  PropertyStream _getPropertyStreamForType<T>() {
+    if (T == String) {
+      return StringPropertyStream();
+    } else if (T == int || T == double) {
+      return NumberPropertyStream();
+    } else if (T == bool) {
+      return BooleanPropertyStream();
+    } else if (T == List) {
+      return ListPropertyStream();
+    } else if (T == Map) {
+      return MapPropertyStream();
+    } else if (T == Null) {
+      return NullPropertyStream();
+    }
+    throw UnsupportedError('Unsupported type for PropertyStream: $T');
+  }
+
+  // * Exposeds
+
+  void addToPropertyStream<T>({
+    required String propertyPath,
+    required T value,
+  }) {
+    final propertyStream = _getPropertyStream(propertyPath);
+    final valuePropertyStream = _getPropertyStreamForType<T>();
+    valuePropertyStream.controller.add(value);
+  }
+}
