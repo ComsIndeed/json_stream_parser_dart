@@ -23,7 +23,65 @@ class JsonStreamParser {
   }
 
   // * Exposeds
-  void getProperty<T>(String path) {}
+  StringPropertyStream getStringProperty(String propertyPath) {
+    final controller =
+        _propertyControllers.putIfAbsent(
+              propertyPath,
+              () => StringPropertyStreamController(),
+            )
+            as StringPropertyStreamController;
+    return controller.propertyStream;
+  }
+
+  NumberPropertyStream getNumberProperty(String propertyPath) {
+    final controller =
+        _propertyControllers.putIfAbsent(
+              propertyPath,
+              () => NumberPropertyStreamController(),
+            )
+            as NumberPropertyStreamController;
+    return controller.propertyStream;
+  }
+
+  BooleanPropertyStream getBooleanProperty(String propertyPath) {
+    final controller =
+        _propertyControllers.putIfAbsent(
+              propertyPath,
+              () => BooleanPropertyStreamController(),
+            )
+            as BooleanPropertyStreamController;
+    return controller.propertyStream;
+  }
+
+  NullPropertyStream getNullProperty(String propertyPath) {
+    final controller =
+        _propertyControllers.putIfAbsent(
+              propertyPath,
+              () => NullPropertyStreamController(),
+            )
+            as NullPropertyStreamController;
+    return controller.propertyStream;
+  }
+
+  MapPropertyStream getMapProperty(String propertyPath) {
+    final controller =
+        _propertyControllers.putIfAbsent(
+              propertyPath,
+              () => MapPropertyStreamController(),
+            )
+            as MapPropertyStreamController;
+    return controller.propertyStream;
+  }
+
+  ListPropertyStream getListProperty(String propertyPath) {
+    final controller =
+        _propertyControllers.putIfAbsent(
+              propertyPath,
+              () => ListPropertyStreamController(),
+            )
+            as ListPropertyStreamController;
+    return controller.propertyStream;
+  }
 
   // * Controller methods
   void addPropertyChunk({
