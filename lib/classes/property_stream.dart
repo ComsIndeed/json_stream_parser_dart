@@ -1,36 +1,108 @@
+import 'dart:async';
+import 'dart:ffi';
+
 import 'package:json_stream_parser/classes/property_stream_controller.dart';
 
-abstract class PropertyStream {
-  final PropertyStreamController _controller;
+abstract class PropertyStream<T> {
+  final Future<T> _future;
 
-  PropertyStream({required PropertyStreamController controller})
-    : _controller = controller;
+  Future<T> get future => _future;
+
+  PropertyStream({required Future<T> future}) : _future = future;
 }
 
 ///
 /// "WHAT STUFF WOULD BE EXPOSED FROM THE STREAMERS?"
 ///
 
-class StringPropertyStream extends PropertyStream {
-  StringPropertyStream({required super.controller});
+class StringPropertyStream extends PropertyStream<String> {
+  StringPropertyStream({required super.future, required Stream<String> stream})
+    : _stream = stream;
+
+  final Stream<String> _stream;
+  Stream<String> get stream => _stream;
 }
 
-class NumberPropertyStream extends PropertyStream {
-  NumberPropertyStream({required super.controller});
+class NumberPropertyStream extends PropertyStream<num> {
+  NumberPropertyStream({required super.future, required Stream<num> stream})
+    : _stream = stream;
+
+  final Stream<num> _stream;
+  Stream<num> get stream => _stream;
 }
 
-class NullPropertyStream extends PropertyStream {
-  NullPropertyStream({required super.controller});
+class NullPropertyStream extends PropertyStream<Null> {
+  NullPropertyStream({required super.future, required Stream<Null> stream})
+    : _stream = stream;
+
+  final Stream<Null> _stream;
+  Stream<Null> get stream => _stream;
 }
 
-class BooleanPropertyStream extends PropertyStream {
-  BooleanPropertyStream({required super.controller});
+class BooleanPropertyStream extends PropertyStream<bool> {
+  BooleanPropertyStream({required super.future, required Stream<bool> stream})
+    : _stream = stream;
+
+  final Stream<bool> _stream;
+  Stream<bool> get stream => _stream;
 }
 
-class ListPropertyStream extends PropertyStream {
-  ListPropertyStream({required super.controller});
+class ListPropertyStream extends PropertyStream<List<Object?>> {
+  ListPropertyStream({required super.future});
+
+  void onElement(void Function(int, Object?) handleElement) {
+    throw UnimplementedError();
+  }
+
+  StringPropertyStream getStringProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  BooleanPropertyStream getBooleanProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  NumberPropertyStream getNumberProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  NullPropertyStream getNullProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  MapPropertyStream getMapProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  ListPropertyStream getListProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
 }
 
-class MapPropertyStream extends PropertyStream {
-  MapPropertyStream({required super.controller});
+class MapPropertyStream extends PropertyStream<Map<String, Object?>> {
+  MapPropertyStream({required super.future});
+
+  StringPropertyStream getStringProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  BooleanPropertyStream getBooleanProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  NumberPropertyStream getNumberProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  NullPropertyStream getNullProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  MapPropertyStream getMapProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
+
+  ListPropertyStream getListProperty(String propertyPath) {
+    throw UnimplementedError();
+  }
 }

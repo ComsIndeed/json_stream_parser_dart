@@ -1,0 +1,10 @@
+10/27/2025 00:54
+- Fixed two-way dependency of propertystream and controllers
+- Added seperate method property getters
+- Working on making the API adhere to the test interface to continue
+- Currently handling type casting for controller and propertystream futures and controllers and whatever
+
+
+
+
+

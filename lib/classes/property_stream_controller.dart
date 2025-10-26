@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:json_stream_parser/classes/property_stream.dart';
 
-abstract class PropertyStreamController {
+abstract class PropertyStreamController<T> {
   abstract final PropertyStream propertyStream;
   bool _isClosed = false;
   bool get isClosed => _isClosed;
+
+  Completer<T> completer = Completer<T>();
 
   void onClose() {
     _isClosed = true;
@@ -17,7 +21,7 @@ abstract class PropertyStreamController {
 /// VALUE ==> PROPERTY STREAMS
 ///
 
-class StringPropertyStreamController extends PropertyStreamController {
+class StringPropertyStreamController extends PropertyStreamController<String> {
   @override
   late final StringPropertyStream propertyStream;
 
@@ -25,12 +29,18 @@ class StringPropertyStreamController extends PropertyStreamController {
     throw UnimplementedError();
   }
 
+  final streamController = StreamController<String>();
+
   StringPropertyStreamController() {
-    propertyStream = StringPropertyStream(controller: this);
+    propertyStream = StringPropertyStream(
+      stream: streamController.stream,
+      future: completer.future,
+    );
   }
 }
 
-class MapPropertyStreamController extends PropertyStreamController {
+class MapPropertyStreamController
+    extends PropertyStreamController<Map<String, Object?>> {
   @override
   late final MapPropertyStream propertyStream;
 
@@ -39,20 +49,21 @@ class MapPropertyStreamController extends PropertyStreamController {
   }
 
   MapPropertyStreamController() {
-    propertyStream = MapPropertyStream(controller: this);
+    propertyStream = MapPropertyStream(future: completer.future);
   }
 }
 
-class ListPropertyStreamController extends PropertyStreamController {
+class ListPropertyStreamController
+    extends PropertyStreamController<List<Object?>> {
   @override
   late final ListPropertyStream propertyStream;
 
   ListPropertyStreamController() {
-    propertyStream = ListPropertyStream(controller: this);
+    propertyStream = ListPropertyStream(future: completer.future);
   }
 }
 
-class NumberPropertyStreamController extends PropertyStreamController {
+class NumberPropertyStreamController extends PropertyStreamController<num> {
   @override
   late final NumberPropertyStream propertyStream;
 
@@ -60,12 +71,17 @@ class NumberPropertyStreamController extends PropertyStreamController {
     throw UnimplementedError();
   }
 
+  final streamController = StreamController<num>();
+
   NumberPropertyStreamController() {
-    propertyStream = NumberPropertyStream(controller: this);
+    propertyStream = NumberPropertyStream(
+      future: completer.future,
+      stream: streamController.stream,
+    );
   }
 }
 
-class BooleanPropertyStreamController extends PropertyStreamController {
+class BooleanPropertyStreamController extends PropertyStreamController<bool> {
   @override
   late final BooleanPropertyStream propertyStream;
 
@@ -73,12 +89,16 @@ class BooleanPropertyStreamController extends PropertyStreamController {
     throw UnimplementedError();
   }
 
+  final streamController = StreamController<bool>();
   BooleanPropertyStreamController() {
-    propertyStream = BooleanPropertyStream(controller: this);
+    propertyStream = BooleanPropertyStream(
+      future: completer.future,
+      stream: streamController.stream,
+    );
   }
 }
 
-class NullPropertyStreamController extends PropertyStreamController {
+class NullPropertyStreamController extends PropertyStreamController<Null> {
   @override
   late final NullPropertyStream propertyStream;
 
@@ -86,7 +106,12 @@ class NullPropertyStreamController extends PropertyStreamController {
     throw UnimplementedError();
   }
 
+  final streamController = StreamController<Null>();
+
   NullPropertyStreamController() {
-    propertyStream = NullPropertyStream(controller: this);
+    propertyStream = NullPropertyStream(
+      future: completer.future,
+      stream: streamController.stream,
+    );
   }
 }
