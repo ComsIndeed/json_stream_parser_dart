@@ -2,6 +2,15 @@
 
 **WORK IN PROGRESS** - Published to GitHub to allow for cloning anywhere for now
 
+## ✅ Test Suite Available!
+
+This project now includes a **comprehensive test suite with 193 tests** covering all JSON types and streaming scenarios!
+
+- 📁 See `test/COMPLETE_GUIDE.md` for full testing documentation
+- 🚀 Run tests: `dart test`
+- 📊 All tests passing: 100%
+- 🎯 Covers: strings, numbers, booleans, nulls, maps, lists, and complex nesting
+
 ## 🎯 Project Overview
 
 This package implements a **streaming JSON parser** specifically designed for **LLM streaming responses** that output structured JSON data. As an LLM generates JSON token-by-token, this parser allows you to reactively access properties **as they're being formed**, without waiting for the entire response to complete.

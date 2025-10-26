@@ -1,14 +1,19 @@
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
-void main() async {
-  final String string =
-      r'{"name": "John", "age": 30, "isStudent": false, "scores": [85, 90, 78], "address": {"street": "123 Main St", "city": "Anytown"}}';
-  final stream = streamTextInChunks(
-    text: string,
-    chunkSize: 10,
-    interval: Duration(milliseconds: 50),
-  ).asBroadcastStream();
-}
+
+
+
+
+
+// void main() async {
+//   final String string =
+//       r'{"name": "John", "age": 30, "isStudent": false, "scores": [85, 90, 78], "address": {"street": "123 Main St", "city": "Anytown"}}';
+//   final stream = streamTextInChunks(
+//     text: string,
+//     chunkSize: 10,
+//     interval: Duration(milliseconds: 50),
+//   ).asBroadcastStream();
+// }
 
 // /// ! WORks too
 // void main() async {
