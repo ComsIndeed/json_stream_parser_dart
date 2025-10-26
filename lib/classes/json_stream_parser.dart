@@ -26,7 +26,10 @@ class JsonStreamParser {
   void getProperty<T>(String path) {}
 
   // * Controller methods
-  void addPropertyChunk({required String path, required String chunk}) {}
+  void addPropertyChunk({
+    required String propertyPath,
+    required String chunk,
+  }) {}
 
   // * Fields
   final Stream<String> _stream;
@@ -72,6 +75,6 @@ class JsonStreamParser {
 class JsonStreamParserController {
   JsonStreamParserController({required this.addPropertyChunk});
 
-  final void Function({required String path, required String chunk})
+  final void Function({required String propertyPath, required String chunk})
   addPropertyChunk;
 }

@@ -28,9 +28,19 @@ abstract class PropertyDelegate with Delegator {
       propertyPath.isEmpty ? path : '$propertyPath.$path';
 
   void emitToStream<T>(T value, {String? innerPath}) {
-    parserController.addToPropertyStream<T>(
+    throw UnimplementedError();
+
+    ///
+    /// ! THIS IS WHERE YOU LEFT OFF
+    ///
+    /// YOU HAVE TO FIX THIS METHOD SO THAT STREAMING WORKS
+    ///
+    /// YOU NEED TO FIGURE OUT HOW TO "ADD" OR "EMIT" VALUES TO [PROPERTYSTREAMS]
+    /// DO REMEMBER THERE ARE DIFFERENT TYPES WITH DIFFERENT EMISSION REQUIREMENTS AND DIFFERENT PUBLIC APIS
+    ///
+    parserController.addPropertyChunk(
       propertyPath: propertyPath + (innerPath != null ? '.$innerPath' : ''),
-      value: value,
+      chunk: "",
     );
   }
 
