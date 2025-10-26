@@ -3,7 +3,7 @@ import 'package:json_stream_parser/classes/property_delegates/property_delegate.
 class StringPropertyDelegate extends PropertyDelegate {
   StringPropertyDelegate({
     required super.propertyPath,
-    required super.jsonStreamParserController,
+    required super.parserController,
   });
 
   String _buffer = "";

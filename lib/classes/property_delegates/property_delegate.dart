@@ -1,26 +1,34 @@
 // ignore_for_file: prefer_final_fields
 
-import 'dart:async';
-
 import 'package:json_stream_parser/classes/json_stream_parser.dart';
 import 'package:json_stream_parser/classes/mixins.dart';
+
+///
+/// WORKERS THAT NAVIGATE DIFFERENT TOKENS
+/// [ ] RESPONSIBLE FOR ACCUMULATING CHARACTERS
+/// [ ] RESPONSIBLE FOR EMITTING TO THE PROPERTY STREAMS
+/// [ ] RESPONSIBLE FOR HANDLING CHUNK ENDS
+/// [ ] RESPONSIBLE FOR SIGNALLING COMPLETION OF THEIR TASK
+/// [ ] RESPONSIBLE FOR CREATING CHILD DELEGATES AS NEEDED
+/// [ ] RESPONSIBLE FOR UPDATING THE MASTER PARSER'S STATE VIA THE CONTROLLER
+///
 
 /// Delegates are not supposed to just hold states and data, but rather, mutate the master parser's state machine as characters are fed to them.
 abstract class PropertyDelegate with Delegator {
   final String propertyPath;
-  final JsonStreamParserController jsonStreamParserController;
+  final JsonStreamParserController parserController;
   bool isDone = false;
 
   PropertyDelegate({
     required this.propertyPath,
-    required this.jsonStreamParserController,
+    required this.parserController,
   });
 
   String newPath(String path) =>
       propertyPath.isEmpty ? path : '$propertyPath.$path';
 
   void emitToStream<T>(T value, {String? innerPath}) {
-    jsonStreamParserController.addToPropertyStream<T>(
+    parserController.addToPropertyStream<T>(
       propertyPath: propertyPath + (innerPath != null ? '.$innerPath' : ''),
       value: value,
     );

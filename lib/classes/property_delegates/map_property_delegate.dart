@@ -2,15 +2,6 @@
 
 import 'package:json_stream_parser/classes/property_delegates/property_delegate.dart';
 
-/// ! YOU LEFT OFF AT BUILDING THE MAP PROPERTY DELEGATE !
-///
-/// - JUST FINISHED THE FLAT FLOW OF MAP STREAM PARSING
-/// - MIGHT HAVE TO HANDLE LISTS NOW, OR TEST THE PARSER FIRST
-/// - REMEMBER TO UPDATE THE PROPERTY STREAM TO HANDLE GENERIC TYPES (this was autocompleted, do check though)
-/// - You're doing well, goodjob!
-///
-/// Ty!
-
 class MapPropertyDelegate extends PropertyDelegate {
   // * String propertyPath
 
@@ -18,7 +9,7 @@ class MapPropertyDelegate extends PropertyDelegate {
 
   MapPropertyDelegate({
     required super.propertyPath,
-    required super.jsonStreamParserController,
+    required super.parserController,
   });
 
   MapParseState _state = MapParseState.waitingForKey;
@@ -60,10 +51,10 @@ class MapPropertyDelegate extends PropertyDelegate {
 
     if (_state == MapParseState.waitingForValue) {
       if (character == " ") return;
-      _activeChildDelegate = getDelegateFromCharacter(
+      _activeChildDelegate = createDelegate(
         character,
         propertyPath: propertyPath + _keyBuffer,
-        jsonStreamParserController: jsonStreamParserController,
+        jsonStreamParserController: parserController,
       );
       _state = MapParseState.readingValue;
       return;
