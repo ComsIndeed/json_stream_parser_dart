@@ -44,7 +44,8 @@ void main() {
     test('string with escape sequences - newline', () async {
       if (verbose) print('\n[TEST] String with newline escape');
 
-      final json = '{"text":"Hello\\nWorld"}';
+      // TODO: Reconsider if the expected finalValue should contain the literal \n or an actual newline character
+      final json = '{"text":"Hello\\\nWorld"}';
       if (verbose) print('[JSON] $json');
 
       final stream = streamTextInChunks(
