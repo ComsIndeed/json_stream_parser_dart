@@ -45,9 +45,7 @@ abstract class PropertyDelegate with Delegator {
     );
   }
 
-  void addCharacter(String character) {
-    throw UnimplementedError();
-  }
+  void addCharacter(String character);
 
   void onChunkEnd() {}
 }

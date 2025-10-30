@@ -5,4 +5,10 @@ class NullPropertyDelegate extends PropertyDelegate {
     required super.propertyPath,
     required super.parserController,
   });
+
+  @override
+  void addCharacter(String character) {
+    // TODO: implement addCharacter
+    throw UnimplementedError();
+  }
 }
