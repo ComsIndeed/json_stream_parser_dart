@@ -14,6 +14,10 @@
   - Checking the emitters in json stream parser
   - It was indeed the emitter in json stream parser
   - Got it Fixed
+- Figuring out why theres no output for boolean objects
+  - The delegate is being created yes
+  - The first character is now being fed yes, but still not working
+  - The string property seems to work for some reason but the booleans aren't?
 
 ## Architecture
 

@@ -56,6 +56,7 @@ class MapPropertyDelegate extends PropertyDelegate {
         propertyPath: propertyPath + _keyBuffer,
         jsonStreamParserController: parserController,
       );
+      _activeChildDelegate!.addCharacter(character);
       _state = MapParseState.readingValue;
       return;
     }

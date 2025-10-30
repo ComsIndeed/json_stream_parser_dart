@@ -8,7 +8,24 @@ class BooleanPropertyDelegate extends PropertyDelegate {
 
   @override
   void addCharacter(String character) {
-    // TODO: implement addCharacter
-    throw UnimplementedError();
+    print('BooleanPropertyDelegate received character: $character');
+    if (character == "t") {
+      parserController.addPropertyChunk<bool>(
+        propertyPath: propertyPath,
+        chunk: true,
+      );
+      parserController.getPropertyStreamController(propertyPath).complete(true);
+    } else if (character == "f") {
+      parserController.addPropertyChunk<bool>(
+        propertyPath: propertyPath,
+        chunk: false,
+      );
+      parserController
+          .getPropertyStreamController(propertyPath)
+          .complete(false);
+    } else if (character == "," || character == "}" || character == "]") {
+      isDone = true;
+      return;
+    }
   }
 }
