@@ -29,6 +29,8 @@ class StringPropertyDelegate extends PropertyDelegate {
     if (character == '"') {
       isDone = true;
       addPropertyChunk(_buffer);
+      // TODO : call finish for string streams
+
       return;
     }
     _buffer += character;

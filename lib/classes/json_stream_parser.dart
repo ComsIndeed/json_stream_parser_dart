@@ -18,7 +18,8 @@ class JsonStreamParser {
   JsonStreamParser(Stream<String> stream) : _stream = stream {
     _stream.listen(_parseChunk);
     _controller = JsonStreamParserController(
-      addPropertyChunk: addPropertyChunk,
+      addPropertyChunk: _addPropertyChunk,
+      getPropertyStreamController: _getControllerForPath,
     );
   }
 
@@ -84,7 +85,7 @@ class JsonStreamParser {
   }
 
   // * Controller methods
-  void addPropertyChunk<T>({required String propertyPath, required T chunk}) {
+  void _addPropertyChunk<T>({required String propertyPath, required T chunk}) {
     final controller =
         _propertyControllers.putIfAbsent(propertyPath, () {
               if (T == String) {
@@ -127,6 +128,10 @@ class JsonStreamParser {
   PropertyDelegate? _rootDelegate;
 
   // * Helpers
+  PropertyStreamController _getControllerForPath(String propertyPath) {
+    return _propertyControllers[propertyPath]!;
+  }
+
   void _parseChunk(String chunk) {
     for (final character in chunk.split('')) {
       if (_rootDelegate != null) {
@@ -158,8 +163,14 @@ class JsonStreamParser {
 }
 
 class JsonStreamParserController {
-  JsonStreamParserController({required this.addPropertyChunk});
+  JsonStreamParserController({
+    required this.addPropertyChunk,
+    required this.getPropertyStreamController,
+  });
 
   final void Function<T>({required String propertyPath, required T chunk})
   addPropertyChunk;
+
+  PropertyStreamController Function(String propertyPath)
+  getPropertyStreamController;
 }
