@@ -8,7 +8,7 @@
             "name": "Dart",
             "type": "dart",
             "request": "launch",
-            "program": "lib/test.dart"
+            "program": "lib/src/test_main.dart"
         },
     ]
 }

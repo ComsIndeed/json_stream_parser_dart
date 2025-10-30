@@ -84,10 +84,37 @@ class JsonStreamParser {
   }
 
   // * Controller methods
-  void addPropertyChunk({
-    required String propertyPath,
-    required String chunk,
-  }) {}
+  void addPropertyChunk<T>({required String propertyPath, required T chunk}) {
+    final controller =
+        _propertyControllers.putIfAbsent(propertyPath, () {
+              if (T == String) {
+                return StringPropertyStreamController();
+              } else if (T == num) {
+                return NumberPropertyStreamController();
+              } else if (T == bool) {
+                return BooleanPropertyStreamController();
+              } else if (T == Null) {
+                return NullPropertyStreamController();
+              } else if (T == Map<String, Object?>) {
+                return MapPropertyStreamController();
+              } else if (T == List<Object?>) {
+                return ListPropertyStreamController();
+              } else {
+                throw UnimplementedError(
+                  'No PropertyStreamController for type $T',
+                );
+              }
+            })
+            as PropertyStreamController<T>;
+
+    if (controller is StringPropertyStreamController && chunk is String) {
+      final stringController = controller as StringPropertyStreamController;
+      stringController.addChunk(chunk);
+      return;
+    } else {
+      controller.complete(chunk);
+    }
+  }
 
   // * Fields
   final Stream<String> _stream;
@@ -133,6 +160,6 @@ class JsonStreamParser {
 class JsonStreamParserController {
   JsonStreamParserController({required this.addPropertyChunk});
 
-  final void Function({required String propertyPath, required String chunk})
+  final void Function<T>({required String propertyPath, required T chunk})
   addPropertyChunk;
 }

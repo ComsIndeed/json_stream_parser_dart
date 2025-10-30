@@ -11,7 +11,7 @@ class StringPropertyDelegate extends PropertyDelegate {
 
   @override
   void onChunkEnd() {
-    emitToStream(_buffer);
+    addPropertyChunk(_buffer);
     _buffer = "";
   }
 
@@ -28,7 +28,7 @@ class StringPropertyDelegate extends PropertyDelegate {
     }
     if (character == '"') {
       isDone = true;
-      emitToStream(_buffer);
+      addPropertyChunk(_buffer);
       return;
     }
     _buffer += character;

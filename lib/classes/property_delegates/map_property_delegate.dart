@@ -22,7 +22,7 @@ class MapPropertyDelegate extends PropertyDelegate {
   @override
   void onChunkEnd() {
     _activeChildDelegate?.onChunkEnd();
-    emitToStream<String>(_stringBuffer);
+    addPropertyChunk<String>(_stringBuffer);
     _stringBuffer = "";
   }
 
@@ -50,7 +50,7 @@ class MapPropertyDelegate extends PropertyDelegate {
     }
 
     if (_state == MapParseState.waitingForValue) {
-      if (character == " ") return;
+      if (character == " " || character == ":") return;
       _activeChildDelegate = createDelegate(
         character,
         propertyPath: propertyPath + _keyBuffer,

@@ -12,6 +12,13 @@ abstract class PropertyStreamController<T> {
   void onClose() {
     _isClosed = true;
   }
+
+  void complete(T value) {
+    if (!_isClosed) {
+      completer.complete(value);
+      onClose();
+    }
+  }
 }
 
 ///
@@ -25,11 +32,23 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
   @override
   late final StringPropertyStream propertyStream;
 
+  String _buffer = "";
   void addChunk(String chunk) {
-    throw UnimplementedError();
+    _buffer += chunk;
+    streamController.add(chunk);
   }
 
   final streamController = StreamController<String>();
+
+  @override
+  /// [value] will be ignored. The stream will emit the accumulated chunks instead.
+  void complete(String value) {
+    if (!_isClosed) {
+      completer.complete(_buffer);
+      streamController.close();
+      onClose();
+    }
+  }
 
   StringPropertyStreamController() {
     propertyStream = StringPropertyStream(
@@ -43,10 +62,6 @@ class MapPropertyStreamController
     extends PropertyStreamController<Map<String, Object?>> {
   @override
   late final MapPropertyStream propertyStream;
-
-  void addChunk(String chunk) {
-    throw UnimplementedError();
-  }
 
   MapPropertyStreamController() {
     propertyStream = MapPropertyStream(future: completer.future);
@@ -67,10 +82,6 @@ class NumberPropertyStreamController extends PropertyStreamController<num> {
   @override
   late final NumberPropertyStream propertyStream;
 
-  void complete(num number) {
-    throw UnimplementedError();
-  }
-
   final streamController = StreamController<num>();
 
   NumberPropertyStreamController() {
@@ -85,10 +96,6 @@ class BooleanPropertyStreamController extends PropertyStreamController<bool> {
   @override
   late final BooleanPropertyStream propertyStream;
 
-  void complete(bool value) {
-    throw UnimplementedError();
-  }
-
   final streamController = StreamController<bool>();
   BooleanPropertyStreamController() {
     propertyStream = BooleanPropertyStream(
@@ -101,10 +108,6 @@ class BooleanPropertyStreamController extends PropertyStreamController<bool> {
 class NullPropertyStreamController extends PropertyStreamController<Null> {
   @override
   late final NullPropertyStream propertyStream;
-
-  void complete() {
-    throw UnimplementedError();
-  }
 
   final streamController = StreamController<Null>();
 

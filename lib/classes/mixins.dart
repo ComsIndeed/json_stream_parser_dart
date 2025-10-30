@@ -61,7 +61,7 @@ mixin Delegator {
         );
       default:
         throw UnimplementedError(
-          'No delegate available for character: $character',
+          'No delegate available for character: \n|$character|',
         );
     }
   }

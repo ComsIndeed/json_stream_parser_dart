@@ -5,6 +5,12 @@
 - Currently handling type casting for controller and propertystream futures and controllers and whatever
 
 
-
+10/30/2025 23:59
+- Trying to get the simple string property test to pass
+- Added the addPropertyChunk method
+- Figuring out why theres nothing outputting when running the stream
+    - Checking the emitters in json stream parser
+    - It was indeed the emitter in json stream parser
+    - 
 
 
