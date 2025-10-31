@@ -8,15 +8,26 @@ class StringPropertyDelegate extends PropertyDelegate {
 
   String _buffer = "";
   bool _isEscaping = false;
+  bool _firstCharacter = true;
 
   @override
   void onChunkEnd() {
+    if (_buffer.isEmpty) return;
     addPropertyChunk(_buffer);
     _buffer = "";
   }
 
   @override
   void addCharacter(String character) {
+    if (_firstCharacter && character == '"') {
+      _firstCharacter = false;
+      return;
+    }
+    if (_firstCharacter) {
+      throw Exception(
+        'StringPropertyDelegate expected starting quote but got: $character',
+      );
+    }
     if (_isEscaping) {
       _buffer += character;
       _isEscaping = false;
@@ -28,10 +39,12 @@ class StringPropertyDelegate extends PropertyDelegate {
     }
     if (character == '"') {
       isDone = true;
-      addPropertyChunk(_buffer);
+      addPropertyChunk(_buffer); // this does .stream.add(_buffer)
       parserController
           .getPropertyStreamController(propertyPath)
-          .complete("THIS VALUE IS IGNORED");
+          .complete(
+            "THIS VALUE IS IGNORED",
+          ); // this does .stream.close(), and I think its closing before we can pass the actual value maybe?
       return;
     }
     _buffer += character;

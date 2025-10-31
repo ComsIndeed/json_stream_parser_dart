@@ -18,6 +18,7 @@
   - The delegate is being created yes
   - The first character is now being fed yes, but still not working
   - The string property seems to work for some reason but the booleans aren't?
+    - Got the string delegates to work again, still working on booleans
 
 ## Architecture
 
