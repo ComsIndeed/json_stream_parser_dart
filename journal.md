@@ -19,6 +19,9 @@
   - The first character is now being fed yes, but still not working
   - The string property seems to work for some reason but the booleans aren't?
     - Got the string delegates to work again, still working on booleans
+    - Got booleans working
+    - Found an issue that if booleans went first in a map it would break
+      - Fixed that issue
 
 ## Architecture
 

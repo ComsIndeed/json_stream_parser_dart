@@ -90,6 +90,16 @@ class NumberPropertyStreamController extends PropertyStreamController<num> {
       stream: streamController.stream,
     );
   }
+
+  @override
+  /// [value] will be ignored. The stream will emit the accumulated chunks instead.
+  void complete(num value) {
+    if (!_isClosed) {
+      completer.complete(value);
+      streamController.close();
+      onClose();
+    }
+  }
 }
 
 class BooleanPropertyStreamController extends PropertyStreamController<bool> {
@@ -102,6 +112,16 @@ class BooleanPropertyStreamController extends PropertyStreamController<bool> {
       future: completer.future,
       stream: streamController.stream,
     );
+  }
+
+  @override
+  /// [value] will be ignored. The stream will emit the accumulated chunks instead.
+  void complete(bool value) {
+    if (!_isClosed) {
+      streamController.close();
+      completer.complete(value);
+      onClose();
+    }
   }
 }
 
@@ -116,5 +136,15 @@ class NullPropertyStreamController extends PropertyStreamController<Null> {
       future: completer.future,
       stream: streamController.stream,
     );
+  }
+
+  @override
+  /// [value] will be ignored. The stream will emit the accumulated chunks instead.
+  void complete(Null value) {
+    if (!_isClosed) {
+      completer.complete(value);
+      streamController.close();
+      onClose();
+    }
   }
 }

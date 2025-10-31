@@ -3,12 +3,7 @@ import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
 void main() async {
   try {
-    final json = '''
-  {
-    "bio": true,
-    "name": "ABCDEFG",
-  }
-  ''';
+    final json = '''{"active":true}''';
 
     final stream = streamTextInChunks(
       text: json,
@@ -18,7 +13,7 @@ void main() async {
 
     final parser = JsonStreamParser(stream);
     final nameStream = parser.getStringProperty("name");
-    final bioStream = parser.getBooleanProperty("bio");
+    final bioStream = parser.getBooleanProperty("active");
 
     nameStream.stream.listen((chunk) {
       print('Name chunk: "$chunk"');

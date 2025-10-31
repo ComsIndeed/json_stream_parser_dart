@@ -22,8 +22,9 @@ class MapPropertyDelegate extends PropertyDelegate {
 
   void onChildComplete() {
     _activeChildDelegate = null;
-    _state = MapParseState.waitingForCommaOrEnd;
-    print('Child delegate completed for key: $_keyBuffer');
+    _state = MapParseState
+        .waitingForKey; // The delegate received the comma or end signal, so...
+    _keyBuffer = "";
   }
 
   @override
@@ -36,6 +37,10 @@ class MapPropertyDelegate extends PropertyDelegate {
   @override
   void addCharacter(String character) {
     _stringBuffer += character;
+
+    // print(
+    //   '\nState: $_state\n Char: |$character| (${character.length})\n KeyBuffer: |$_keyBuffer|',
+    // );
 
     if (_state == MapParseState.readingKey) {
       if (character == '"') {
@@ -81,10 +86,18 @@ class MapPropertyDelegate extends PropertyDelegate {
 
     if (_state == MapParseState.waitingForCommaOrEnd) {
       if (character == ',') {
+        print("COMMA FOUND, RESETTING FOR NEXT KEY");
+        onComplete?.call();
         _state = MapParseState.waitingForKey;
         _keyBuffer = "";
         return;
       } else if (character == '}') {
+        isDone = true;
+        onComplete?.call();
+        return;
+      }
+
+      if (_state == MapParseState.waitingForKey && character == "}") {
         isDone = true;
         onComplete?.call();
         return;

@@ -40,7 +40,9 @@ class StringPropertyDelegate extends PropertyDelegate {
     }
     if (character == '"') {
       isDone = true;
-      addPropertyChunk(_buffer); // this does .stream.add(_buffer)
+      if (_buffer.isNotEmpty) {
+        addPropertyChunk(_buffer); // this does .stream.add(_buffer)
+      }
       parserController
           .getPropertyStreamController(propertyPath)
           .complete(

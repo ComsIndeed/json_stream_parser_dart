@@ -145,12 +145,28 @@ class JsonStreamParser {
             })
             as PropertyStreamController<T>;
 
-    if (controller is StringPropertyStreamController && chunk is String) {
-      final stringController = controller as StringPropertyStreamController;
-      stringController.addChunk(chunk);
+    // everything but list and map controllers will emit chunks in its stream
+    if (controller is MapPropertyStreamController ||
+        controller is ListPropertyStreamController) {
+      controller.complete(chunk);
       return;
     } else {
-      controller.complete(chunk);
+      if (controller is StringPropertyStreamController) {
+        final stringController = controller as StringPropertyStreamController;
+        stringController.streamController.add(chunk as String);
+      } else if (controller is NumberPropertyStreamController) {
+        final numberController = controller as NumberPropertyStreamController;
+        numberController.streamController.add(chunk as num);
+        numberController.complete(chunk as num);
+      } else if (controller is BooleanPropertyStreamController) {
+        final booleanController = controller as BooleanPropertyStreamController;
+        booleanController.streamController.add(chunk as bool);
+        booleanController.complete(chunk as bool);
+      } else if (controller is NullPropertyStreamController) {
+        final nullController = controller as NullPropertyStreamController;
+        nullController.streamController.add(chunk as Null);
+        nullController.complete(chunk as Null);
+      }
     }
   }
 
