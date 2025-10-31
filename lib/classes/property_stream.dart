@@ -1,7 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
-
-import 'package:json_stream_parser/classes/property_stream_controller.dart';
 
 abstract class PropertyStream<T> {
   final Future<T> _future;

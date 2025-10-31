@@ -22,6 +22,7 @@
     - Got booleans working
     - Found an issue that if booleans went first in a map it would break
       - Fixed that issue
+      - Got null values working, used AI since logic is similar to booleans
 
 ## Architecture
 

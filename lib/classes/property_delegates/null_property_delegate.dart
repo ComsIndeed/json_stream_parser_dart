@@ -9,7 +9,16 @@ class NullPropertyDelegate extends PropertyDelegate {
 
   @override
   void addCharacter(String character) {
-    // TODO: implement addCharacter
-    throw UnimplementedError();
+    if (character == "n") {
+      parserController.addPropertyChunk<Null>(
+        propertyPath: propertyPath,
+        chunk: null,
+      );
+      parserController.getPropertyStreamController(propertyPath).complete(null);
+    } else if (character == "," || character == "}" || character == "]") {
+      isDone = true;
+      onComplete?.call();
+      return;
+    }
   }
 }
