@@ -4,6 +4,7 @@ class NullPropertyDelegate extends PropertyDelegate {
   NullPropertyDelegate({
     required super.propertyPath,
     required super.parserController,
+    super.onComplete,
   });
 
   @override

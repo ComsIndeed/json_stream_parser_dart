@@ -22,7 +22,10 @@ abstract class PropertyDelegate with Delegator {
   PropertyDelegate({
     required this.propertyPath,
     required this.parserController,
+    this.onComplete,
   });
+
+  final void Function()? onComplete;
 
   String newPath(String path) =>
       propertyPath.isEmpty ? path : '$propertyPath.$path';

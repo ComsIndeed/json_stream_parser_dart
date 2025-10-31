@@ -5,8 +5,8 @@ void main() async {
   try {
     final json = '''
   {
-    "name": "ABCDEFG",
     "bio": true,
+    "name": "ABCDEFG",
   }
   ''';
 
@@ -18,7 +18,7 @@ void main() async {
 
     final parser = JsonStreamParser(stream);
     final nameStream = parser.getStringProperty("name");
-    final bioStream = parser.getStringProperty("bio");
+    final bioStream = parser.getBooleanProperty("bio");
 
     nameStream.stream.listen((chunk) {
       print('Name chunk: "$chunk"');
@@ -28,7 +28,7 @@ void main() async {
       print('Final bio: "$finalBio"');
     });
 
-    await bioStream.future;
+    await Future.delayed(Duration(seconds: 1));
   } catch (e) {
     print('Error during parsing: $e');
   }

@@ -4,11 +4,11 @@ class BooleanPropertyDelegate extends PropertyDelegate {
   BooleanPropertyDelegate({
     required super.propertyPath,
     required super.parserController,
+    super.onComplete,
   });
 
   @override
   void addCharacter(String character) {
-    print('BooleanPropertyDelegate received character: $character');
     if (character == "t") {
       parserController.addPropertyChunk<bool>(
         propertyPath: propertyPath,
@@ -25,6 +25,7 @@ class BooleanPropertyDelegate extends PropertyDelegate {
           .complete(false);
     } else if (character == "," || character == "}" || character == "]") {
       isDone = true;
+      onComplete?.call();
       return;
     }
   }

@@ -10,6 +10,7 @@ class MapPropertyDelegate extends PropertyDelegate {
   MapPropertyDelegate({
     required super.propertyPath,
     required super.parserController,
+    super.onComplete,
   });
 
   MapParseState _state = MapParseState.waitingForKey;
@@ -18,6 +19,11 @@ class MapPropertyDelegate extends PropertyDelegate {
   String _keyBuffer = "";
   String _stringBuffer = "";
   PropertyDelegate? _activeChildDelegate;
+
+  void onChildComplete() {
+    _activeChildDelegate = null;
+    _state = MapParseState.waitingForCommaOrEnd;
+  }
 
   @override
   void onChunkEnd() {
@@ -78,6 +84,7 @@ class MapPropertyDelegate extends PropertyDelegate {
         return;
       } else if (character == '}') {
         isDone = true;
+        onComplete?.call();
         return;
       }
     }

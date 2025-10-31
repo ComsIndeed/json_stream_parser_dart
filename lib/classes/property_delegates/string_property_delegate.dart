@@ -4,6 +4,7 @@ class StringPropertyDelegate extends PropertyDelegate {
   StringPropertyDelegate({
     required super.propertyPath,
     required super.parserController,
+    super.onComplete,
   });
 
   String _buffer = "";
@@ -45,6 +46,7 @@ class StringPropertyDelegate extends PropertyDelegate {
           .complete(
             "THIS VALUE IS IGNORED",
           ); // this does .stream.close(), and I think its closing before we can pass the actual value maybe?
+      onComplete?.call();
       return;
     }
     _buffer += character;

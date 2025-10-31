@@ -4,6 +4,7 @@ class ListPropertyDelegate extends PropertyDelegate {
   ListPropertyDelegate({
     required super.propertyPath,
     required super.parserController,
+    super.onComplete,
   });
 
   @override
