@@ -6,7 +6,7 @@ void main() async {
     final json = '''
   {
     "name": "ABCDEFG",
-    "bio": "1234567890",
+    "bio": true,
   }
   ''';
 

@@ -25,6 +25,12 @@ class JsonStreamParser {
 
   // * Exposeds
   StringPropertyStream getStringProperty(String propertyPath) {
+    if (_propertyControllers[propertyPath] != null &&
+        _propertyControllers[propertyPath] is! StringPropertyStreamController) {
+      throw Exception(
+        'Property at path $propertyPath is not a StringPropertyStream',
+      );
+    }
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
@@ -35,6 +41,12 @@ class JsonStreamParser {
   }
 
   NumberPropertyStream getNumberProperty(String propertyPath) {
+    if (_propertyControllers[propertyPath] != null &&
+        _propertyControllers[propertyPath] is! NumberPropertyStreamController) {
+      throw Exception(
+        'Property at path $propertyPath is not a NumberPropertyStream',
+      );
+    }
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
@@ -45,6 +57,13 @@ class JsonStreamParser {
   }
 
   BooleanPropertyStream getBooleanProperty(String propertyPath) {
+    if (_propertyControllers[propertyPath] != null &&
+        _propertyControllers[propertyPath]
+            is! BooleanPropertyStreamController) {
+      throw Exception(
+        'Property at path $propertyPath is not a BooleanPropertyStream',
+      );
+    }
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
@@ -55,6 +74,12 @@ class JsonStreamParser {
   }
 
   NullPropertyStream getNullProperty(String propertyPath) {
+    if (_propertyControllers[propertyPath] != null &&
+        _propertyControllers[propertyPath] is! NullPropertyStreamController) {
+      throw Exception(
+        'Property at path $propertyPath is not a NullPropertyStream',
+      );
+    }
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
@@ -65,6 +90,12 @@ class JsonStreamParser {
   }
 
   MapPropertyStream getMapProperty(String propertyPath) {
+    if (_propertyControllers[propertyPath] != null &&
+        _propertyControllers[propertyPath] is! MapPropertyStreamController) {
+      throw Exception(
+        'Property at path $propertyPath is not a MapPropertyStream',
+      );
+    }
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
@@ -75,6 +106,12 @@ class JsonStreamParser {
   }
 
   ListPropertyStream getListProperty(String propertyPath) {
+    if (_propertyControllers[propertyPath] != null &&
+        _propertyControllers[propertyPath] is! ListPropertyStreamController) {
+      throw Exception(
+        'Property at path $propertyPath is not a ListPropertyStream',
+      );
+    }
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
