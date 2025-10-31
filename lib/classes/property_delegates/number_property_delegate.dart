@@ -4,6 +4,7 @@ class NumberPropertyDelegate extends PropertyDelegate {
   NumberPropertyDelegate({
     required super.propertyPath,
     required super.parserController,
+    super.onComplete,
   });
 
   @override

@@ -2,6 +2,7 @@ import 'package:json_stream_parser/classes/json_stream_parser.dart';
 import 'package:json_stream_parser/classes/property_delegates/boolean_property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/list_property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/map_property_delegate.dart';
+import 'package:json_stream_parser/classes/property_delegates/null_property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/number_property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/property_delegate.dart';
 import 'package:json_stream_parser/classes/property_delegates/string_property_delegate.dart';
@@ -11,6 +12,7 @@ mixin Delegator {
     String character, {
     required String propertyPath,
     required JsonStreamParserController jsonStreamParserController,
+    required void Function()? onComplete,
   }) {
     switch (character) {
       case ' ':
@@ -22,16 +24,19 @@ mixin Delegator {
         return MapPropertyDelegate(
           propertyPath: propertyPath,
           parserController: jsonStreamParserController,
+          onComplete: onComplete,
         );
       case '[':
         return ListPropertyDelegate(
           propertyPath: propertyPath,
           parserController: jsonStreamParserController,
+          onComplete: onComplete,
         );
       case '"':
         return StringPropertyDelegate(
           propertyPath: propertyPath,
           parserController: jsonStreamParserController,
+          onComplete: onComplete,
         );
       case '-':
       case '0':
@@ -47,17 +52,20 @@ mixin Delegator {
         return NumberPropertyDelegate(
           propertyPath: propertyPath,
           parserController: jsonStreamParserController,
+          onComplete: onComplete,
         );
       case 't':
       case 'f':
         return BooleanPropertyDelegate(
           propertyPath: propertyPath,
           parserController: jsonStreamParserController,
+          onComplete: onComplete,
         );
       case 'n':
-        return NumberPropertyDelegate(
+        return NullPropertyDelegate(
           propertyPath: propertyPath,
           parserController: jsonStreamParserController,
+          onComplete: onComplete,
         );
       default:
         throw UnimplementedError(

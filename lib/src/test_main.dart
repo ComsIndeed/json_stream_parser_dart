@@ -25,7 +25,7 @@ void main() async {
     });
 
     bioStream.future.then((finalBio) {
-      print('Final bio: "$finalBio"');
+      print('Final bio: "$finalBio" as type ${finalBio.runtimeType}');
     });
 
     await Future.delayed(Duration(seconds: 1));

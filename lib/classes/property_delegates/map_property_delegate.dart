@@ -23,6 +23,7 @@ class MapPropertyDelegate extends PropertyDelegate {
   void onChildComplete() {
     _activeChildDelegate = null;
     _state = MapParseState.waitingForCommaOrEnd;
+    print('Child delegate completed for key: $_keyBuffer');
   }
 
   @override
@@ -61,6 +62,7 @@ class MapPropertyDelegate extends PropertyDelegate {
         character,
         propertyPath: propertyPath + _keyBuffer,
         jsonStreamParserController: parserController,
+        onComplete: onChildComplete,
       );
       _activeChildDelegate!.addCharacter(character);
       _state = MapParseState.readingValue;
