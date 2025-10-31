@@ -24,6 +24,9 @@
       - Fixed that issue
       - Got null values working, used AI since logic is similar to booleans
       - Got numbers working too, and used AI since logic is similar to strings
+      - trying to get nested maps working now
+- Got nested maps working, surprisingly it was already working, just needed one
+  tweak that the AI spotted.
 
 ## Architecture
 

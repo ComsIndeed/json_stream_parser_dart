@@ -176,6 +176,7 @@ class JsonStreamParser {
 
   // * Memories
   final Map<String, PropertyStreamController> _propertyControllers = {};
+  final Set<String> _previousPropertyControllerKeys = {};
 
   // * States
   PropertyDelegate? _rootDelegate;

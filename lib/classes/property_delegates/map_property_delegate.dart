@@ -37,6 +37,7 @@ class MapPropertyDelegate extends PropertyDelegate {
   @override
   void addCharacter(String character) {
     _stringBuffer += character;
+    // print("|$propertyPath|");
 
     // print(
     //   '\nState: $_state\n Char: |$character| (${character.length})\n KeyBuffer: |$_keyBuffer|',
@@ -65,7 +66,7 @@ class MapPropertyDelegate extends PropertyDelegate {
       if (character == " " || character == ":") return;
       _activeChildDelegate = createDelegate(
         character,
-        propertyPath: propertyPath + _keyBuffer,
+        propertyPath: newPath(_keyBuffer),
         jsonStreamParserController: parserController,
         onComplete: onChildComplete,
       );
@@ -86,8 +87,6 @@ class MapPropertyDelegate extends PropertyDelegate {
 
     if (_state == MapParseState.waitingForCommaOrEnd) {
       if (character == ',') {
-        print("COMMA FOUND, RESETTING FOR NEXT KEY");
-        onComplete?.call();
         _state = MapParseState.waitingForKey;
         _keyBuffer = "";
         return;
@@ -96,12 +95,12 @@ class MapPropertyDelegate extends PropertyDelegate {
         onComplete?.call();
         return;
       }
+    }
 
-      if (_state == MapParseState.waitingForKey && character == "}") {
-        isDone = true;
-        onComplete?.call();
-        return;
-      }
+    if (_state == MapParseState.waitingForKey && character == "}") {
+      isDone = true;
+      onComplete?.call();
+      return;
     }
 
     return;

@@ -1,10 +1,9 @@
 import 'package:json_stream_parser/classes/json_stream_parser.dart';
 import 'package:test/test.dart';
-import 'package:json_stream_parser/json_stream_parser.dart';
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
 /// Enable verbose logging to debug test execution
-const bool verbose = true;
+const bool verbose = false;
 
 // TODO: HANDLE ESCAPE SEQUENCES IN STRINGS MORE CLEARLY
 // I am unsure if the test expectations should have the actual escape characters interpreted

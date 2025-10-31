@@ -3,7 +3,8 @@ import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
 void main() async {
   try {
-    final json = '''{"active":true}''';
+    final json =
+        '''{"parent": {"child": "Hello, World!"}, "number": 42, "newNested": {"deepChild": {"grandChild": "Hello, Grandchild!"}}, "nothing": null}''';
 
     final stream = streamTextInChunks(
       text: json,
@@ -12,16 +13,11 @@ void main() async {
     );
 
     final parser = JsonStreamParser(stream);
-    final nameStream = parser.getStringProperty("name");
-    final bioStream = parser.getBooleanProperty("active");
+    // final childStream = parser.getStringProperty("parent.child");
 
-    nameStream.stream.listen((chunk) {
-      print('Name chunk: "$chunk"');
-    });
-
-    bioStream.future.then((finalBio) {
-      print('Final bio: "$finalBio" as type ${finalBio.runtimeType}');
-    });
+    // childStream.future.then((finalChild) {
+    //   print('Final child: "$finalChild" as type ${finalChild.runtimeType}');
+    // });
 
     await Future.delayed(Duration(seconds: 1));
   } catch (e) {
