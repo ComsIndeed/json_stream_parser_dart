@@ -27,6 +27,8 @@
       - trying to get nested maps working now
 - Got nested maps working, surprisingly it was already working, just needed one
   tweak that the AI spotted.
+  - Strings now work again
+  - Got to work on lists now
 
 ## Architecture
 

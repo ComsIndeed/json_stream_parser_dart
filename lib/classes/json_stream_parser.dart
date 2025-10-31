@@ -153,7 +153,7 @@ class JsonStreamParser {
     } else {
       if (controller is StringPropertyStreamController) {
         final stringController = controller as StringPropertyStreamController;
-        stringController.streamController.add(chunk as String);
+        stringController.addChunk(chunk as String);
       } else if (controller is NumberPropertyStreamController) {
         final numberController = controller as NumberPropertyStreamController;
         numberController.streamController.add(chunk as num);

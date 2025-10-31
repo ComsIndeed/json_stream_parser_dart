@@ -41,13 +41,9 @@ class StringPropertyDelegate extends PropertyDelegate {
     if (character == '"') {
       isDone = true;
       if (_buffer.isNotEmpty) {
-        addPropertyChunk(_buffer); // this does .stream.add(_buffer)
+        addPropertyChunk(_buffer);
       }
-      parserController
-          .getPropertyStreamController(propertyPath)
-          .complete(
-            "THIS VALUE IS IGNORED",
-          ); // this does .stream.close(), and I think its closing before we can pass the actual value maybe?
+      parserController.getPropertyStreamController(propertyPath).complete("");
       onComplete?.call();
       return;
     }
