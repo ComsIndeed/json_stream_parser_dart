@@ -32,6 +32,9 @@
   - want to ask Gemini if this move of making AI do the work is a good idea
   - tried to let Copilot do the list delegate but its failing right now
   - Found bugs in map nesting, where nesteds dont seem to work again
+  - Found issues with type casting in main parser on the addPropertyChunk
+    method:
+    > `type 'MapPropertyStreamController' is not a subtype of type 'PropertyStreamController<String>' in type cast`
 
 ## Architecture
 

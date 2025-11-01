@@ -71,27 +71,45 @@ class ListPropertyStream extends PropertyStream<List<Object?>> {
   }
 
   StringPropertyStream getStringProperty(String propertyPath) {
-    throw UnimplementedError();
+    return _parserController
+            .getPropertyStreamController(propertyPath)
+            .propertyStream
+        as StringPropertyStream;
   }
 
   BooleanPropertyStream getBooleanProperty(String propertyPath) {
-    throw UnimplementedError();
+    return _parserController
+            .getPropertyStreamController(propertyPath)
+            .propertyStream
+        as BooleanPropertyStream;
   }
 
   NumberPropertyStream getNumberProperty(String propertyPath) {
-    throw UnimplementedError();
+    return _parserController
+            .getPropertyStreamController(propertyPath)
+            .propertyStream
+        as NumberPropertyStream;
   }
 
   NullPropertyStream getNullProperty(String propertyPath) {
-    throw UnimplementedError();
+    return _parserController
+            .getPropertyStreamController(propertyPath)
+            .propertyStream
+        as NullPropertyStream;
   }
 
   MapPropertyStream getMapProperty(String propertyPath) {
-    throw UnimplementedError();
+    return _parserController
+            .getPropertyStreamController(propertyPath)
+            .propertyStream
+        as MapPropertyStream;
   }
 
   ListPropertyStream getListProperty(String propertyPath) {
-    throw UnimplementedError();
+    return _parserController
+            .getPropertyStreamController(propertyPath)
+            .propertyStream
+        as ListPropertyStream;
   }
 }
 

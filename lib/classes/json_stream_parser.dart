@@ -159,7 +159,9 @@ class JsonStreamParser {
                 );
               }
             })
-            as PropertyStreamController<T>;
+            as PropertyStreamController<
+              T
+            >; // TODO: Fix casting. Maybe remove generics?
 
     // everything but list and map controllers will emit chunks in its stream
     if (controller is MapPropertyStreamController ||
