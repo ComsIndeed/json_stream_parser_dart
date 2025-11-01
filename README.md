@@ -128,7 +128,7 @@ Imagine an LLM generating this JSON as a stream:
 **Your code can reactively access properties as they complete:**
 
 ```dart
-import 'package:json_stream_parser/json_stream_parser.dart';
+import 'package.json_stream_parser/json_stream_parser.dart';
 
 void main() async {
   // Simulating an LLM streaming response
@@ -142,15 +142,15 @@ void main() async {
   final ageStream = parser.getNumberProperty("user.age");
   
   // React to values as they complete
-  statusStream.listen((value) {
+  statusStream.stream.listen((value) {
     print("Status completed: $value"); // Prints immediately after "status":"success" is parsed
   });
   
-  nameStream.listen((name) {
+  nameStream.stream.listen((name) {
     print("User name: $name"); // Prints as soon as "name":"Alice" is complete
   });
   
-  ageStream.listen((age) {
+  ageStream.stream.listen((age) {
     print("User age: $age"); // Prints when age property is complete
   });
 }
@@ -166,14 +166,17 @@ void main() async {
   // Get a map property, then chain further
   final userMapStream = parser.getMapProperty("user");
   
-  userMapStream.listen((userMap) {
-    // Once user map is complete, access its properties
-    final name = userMap.getStringProperty("name");
-    final email = userMap.getStringProperty("email");
-    
-    name.listen((n) => print("Name: $n"));
-    email.listen((e) => print("Email: $e"));
+  // Listen to the user map's future to know when it's *fully* parsed
+  userMapStream.future.then((userMap) {
+      print("User map is complete!");
   });
+
+  // Even before the map is complete, you can subscribe to its children
+  final name = userMapStream.getStringProperty("name");
+  final email = userMapStream.getStringProperty("email");
+  
+  name.stream.listen((n) => print("Name: $n"));
+  email.stream.listen((e) => print("Email: $e"));
 }
 ```
 
@@ -185,22 +188,38 @@ void main() async {
   final llmStream = getLLMItemStream();
   final parser = JsonStreamParser(llmStream);
   
-  // Access array elements
+  // Option 1: Access array elements directly by path
+  // This is the simplest way.
   final firstItemName = parser.getStringProperty("items[0].name");
   final secondItemId = parser.getNumberProperty("items[1].id");
   
-  firstItemName.listen((name) {
+  firstItemName.stream.listen((name) {
     print("First item: $name"); // Prints as soon as items[0].name completes
   });
   
-  // Or get the entire list, then iterate
+  // Option 2: Get the entire list and use onElement for dynamic handling
   final itemsStream = parser.getListProperty("items");
-  itemsStream.listen((items) {
-    // Access list property stream methods
-    items.onElement((index, element) {
-      print("Item $index: ${element.getStringProperty("name")}");
-    });
+  
+  // "Arm the trap"
+  itemsStream.onElement((index, element) {
+    print("Found element at index $index!");
+
+    // Check what type of element was found
+    if (element is MapPropertyStream) {
+      // It's a map! We can subscribe to its children *before*
+      // they have even been parsed.
+      element.getStringProperty("name").stream.listen((name) {
+         print("  -> Item $index Name: $name");
+      });
+      element.getNumberProperty("id").future.then((id) {
+         print("  -> Item $index ID: $id");
+      });
+    }
   });
+
+  // You can still await the full list
+  final fullList = await itemsStream.future;
+  print("Full list has completed parsing: $fullList");
 }
 ```
 
@@ -208,13 +227,13 @@ void main() async {
 
 ```dart
 import 'package:http/http.dart' as http;
-import 'package:json_stream_parser/json_stream_parser.dart';
+import 'package.json_stream_parser/json_stream_parser.dart';
 
 void main() async {
   // Call OpenAI API with streaming and JSON mode
   final request = http.Request(
     'POST',
-    Uri.parse('https://api.openai.com/v1/chat/completions'),
+    Uri.parse('[https://api.openai.com/v1/chat/completions](https://api.openai.com/v1/chat/completions)'),
   );
   
   request.headers['Authorization'] = 'Bearer YOUR_API_KEY';
@@ -245,18 +264,21 @@ void main() async {
   final parser = JsonStreamParser(charStream);
   
   // Update UI as properties become available
-  parser.getStringProperty("name").listen((name) {
-    updateUI(nameWidget: name);
+  parser.getStringProperty("name").stream.listen((name) {
+    updateUI(nameWidget: name); // e.g., myTextWidget.text += name
   });
   
-  parser.getNumberProperty("age").listen((age) {
-    updateUI(ageWidget: age);
+  parser.getNumberProperty("age").future.then((age) {
+    updateUI(ageWidget: age); // e.g., myAgeWidget.text = age.toString()
   });
   
-  parser.getListProperty("hobbies").listen((hobbies) {
-    hobbies.onElement((index, hobby) {
-      addHobbyToUI(hobby.getStringProperty("name"));
-    });
+  parser.getListProperty("hobbies").onElement((index, hobby) {
+     // hobby is a PropertyStream, check its type
+     if (hobby is MapPropertyStream) {
+        hobby.getStringProperty("name").stream.listen((hobbyName) {
+            addHobbyToUI(hobbyName); // Add a new text widget with this name
+        });
+     }
   });
 }
 ```
@@ -270,26 +292,18 @@ void main() async {
   
   // Direct deep path
   final deepValue = parser.getStringProperty("ancestor.parent.child[2].user.name");
-  deepValue.listen((name) => print("Deep nested name: $name"));
+  deepValue.stream.listen((nameChunk) => print("Deep nested name chunk: $nameChunk"));
   
   // Or chain step by step
   final ancestor = parser.getMapProperty("ancestor");
-  ancestor.listen((ancestorMap) {
-    final parent = ancestorMap.getMapProperty("parent");
-    parent.listen((parentMap) {
-      final children = parentMap.getListProperty("child");
-      children.listen((childList) {
-        final thirdChild = childList.getMapProperty("[2]");
-        thirdChild.listen((child) {
-          final user = child.getMapProperty("user");
-          user.listen((userMap) {
-            final name = userMap.getStringProperty("name");
-            name.listen((n) => print("Chained name: $n"));
-          });
-        });
-      });
-    });
-  });
+
+  // You can chain *before* the stream even starts!
+  final parent = ancestor.getMapProperty("parent");
+  final children = parent.getListProperty("child");
+  final thirdChild = children.getMapProperty("[2]");
+  final userName = thirdChild.getStringProperty("name");
+
+  userName.stream.listen((n) => print("Chained name chunk: $n"));
 }
 ```
 
@@ -317,18 +331,25 @@ All property streams inherit from this base:
 
 ```dart
 abstract class PropertyStream<T> {
-  // Listen to value emissions
-  Stream<T> get stream;
-  
-  // Listen helper
-  StreamSubscription<T> listen(void Function(T value) onData);
+  /// A stream of the *raw text* of the value as it's parsed.
+  /// For `String`, this is the clean, unescaped text, chunk by chunk.
+  /// For `Map` or `List`, this is the raw JSON text of its contents,
+  /// including brackets (e.g., `{"key":"value"}`).
+  Stream<String> get stream;
+
+  /// A future that completes with the *final, fully-parsed value*
+  /// once the parser finishes this property.
+  /// For `String`, this is a `Future<String>`.
+  /// For `Map`, this is a `Future<Map<String, dynamic>>`.
+  /// For `Number`, this is a `Future<num>`.
+  Future<T> get future;
 }
 ```
 
 ### MapPropertyStream
 
 ```dart
-class MapPropertyStream extends PropertyStream<Map> {
+class MapPropertyStream extends PropertyStream<Map<String, dynamic>> {
   // Chain to access nested properties with typed methods
   StringPropertyStream getStringProperty(String key);
   NumberPropertyStream getNumberProperty(String key);
@@ -336,17 +357,13 @@ class MapPropertyStream extends PropertyStream<Map> {
   NullPropertyStream getNullProperty(String key);
   MapPropertyStream getMapProperty(String key);
   ListPropertyStream getListProperty(String key);
-  
-  // Listen to key-value pairs as they complete
-  Stream<MapEntry<String, dynamic>> get entries;
-}
 }
 ```
 
 ### ListPropertyStream
 
 ```dart
-class ListPropertyStream extends PropertyStream<List> {
+class ListPropertyStream extends PropertyStream<List<dynamic>> {
   // Access specific index with typed methods (e.g., "[0]", "[1]")
   StringPropertyStream getStringProperty(String index);
   NumberPropertyStream getNumberProperty(String index);
@@ -355,13 +372,11 @@ class ListPropertyStream extends PropertyStream<List> {
   MapPropertyStream getMapProperty(String index);
   ListPropertyStream getListProperty(String index);
   
-  // React to each element as it completes
-  void onElement(void Function(int index, dynamic element) callback);
-  
-  // Stream of completed elements
-  Stream<dynamic> get elements;
-}
-  Stream<dynamic> get elements;
+  /// "Arms the trap."
+  /// Registers a synchronous callback that fires the *instant*
+  /// a new element is discovered, *before* it's parsed.
+  /// This allows you to subscribe to its properties with no risk of desync.
+  void onElement(void Function(PropertyStream element) callback);
 }
 ```
 
@@ -393,281 +408,109 @@ class NullPropertyStream extends PropertyStream<Null> {
 - [x] `PropertyDelegate` base class with path management
 - [x] `MapPropertyDelegate` with complete state machine implementation
 - [x] `StringPropertyDelegate` with escape character handling
+- [x] `NumberPropertyDelegate`, `BooleanPropertyDelegate`,
+      `NullPropertyDelegate`
 - [x] `JsonStreamParser` base implementation with root delegate creation
 - [x] Property stream/controller architecture defined
 - [x] `Delegator` mixin for delegate factory pattern
 - [x] Character-by-character parsing infrastructure
+- [x] `onChunkEnd` signaling for streaming string chunks
+- [x] "Active checking" (`isDone`) for child delegate completion
 
 ### 🚧 In Progress
 
-You're currently at the **property emission interface** phase - determining how
-delegates should communicate parsed values back to property streams, and how to
-implement the **chainable typed property methods** for Map and List streams.
+You're currently at the **List API** phase.
+
+- `ListPropertyDelegate` is the next major piece to implement.
+- Implementing the `onElement` "arm the trap" mechanism is the key challenge.
 
 ### Key Design Questions Being Resolved:
 
-1. How should delegates emit values to their property streams?
-2. What's the interface for `addPropertyChunk` and `addToPropertyStream`?
-3. How should property controllers aggregate chunks into complete values?
-4. How should `MapPropertyStream` and `ListPropertyStream` typed methods work?
-5. Should property streams maintain their own sub-property registries?
+1. **How to implement `ListPropertyDelegate`'s state machine.** (It will be very
+   similar to `MapPropertyDelegate`'s, but it looks for values and commas
+   instead of keys.)
+2. **How to handle `onElement`?** (The delegate needs to call the `onElement`
+   callbacks _synchronously_ when it first discovers an element, _before_
+   feeding it characters.)
 
 ## ✅ Task List
 
 ### Core Parser Implementation
 
-- [ ] **Complete `JsonStreamParserController` interface**
-  - [ ] Implement `addPropertyChunk` method
-  - [ ] Add `addToPropertyStream<T>` method (currently called by delegates but
-        not defined)
-  - [ ] Implement property controller registry management
-        (`Map<String, PropertyStreamController>`)
-  - [ ] Add method to create/retrieve property controllers by path
-  - [ ] Handle path parsing (split by `.` and handle `[index]` notation)
-
-- [ ] **Implement typed property getter methods**
-  - [ ] Implement `getStringProperty(path)`, `getNumberProperty(path)`, etc.
-  - [ ] Parse the path string (handle dots and array indices)
-  - [ ] Create or retrieve property controller for the given path
-  - [ ] Return the appropriate property stream to the caller
-  - [ ] Handle path validation and error cases
-
-- [ ] **Complete Property Stream Controllers**
-  - [ ] Add internal `StreamController<T>` to each controller type
-  - [ ] Implement `StringPropertyStreamController.addChunk` - accumulate string
-        chunks
-  - [ ] Implement `MapPropertyStreamController` - manage nested property
-        controllers
-  - [ ] Implement `ListPropertyStreamController` - manage indexed element
-        controllers
-  - [ ] Implement `NumberPropertyStreamController.complete` - emit final number
-        value
-  - [ ] Implement `BooleanPropertyStreamController.complete` - emit true/false
-  - [ ] Implement `NullPropertyStreamController.complete` - emit null
-  - [ ] Implement stream closure logic in `onClose`
-
-- [ ] **Complete Property Streams**
-  - [ ] Expose `Stream<T>` getter for each property stream type
-  - [ ] Add `listen()` method wrapper for convenience
-  - [ ] **Implement `MapPropertyStream` typed methods** - getStringProperty(),
-        getNumberProperty(), etc. for chainable access
-  - [ ] **Implement `ListPropertyStream` typed methods** -
-        getStringProperty("[0]"), etc. for chainable access
-  - [ ] Implement `ListPropertyStream.onElement()` callback
-  - [ ] Implement `ListPropertyStream.elements` stream
-  - [ ] Implement `MapPropertyStream.entries` stream
-  - [ ] Implement error handling for type mismatches
+- [x] **Complete `JsonStreamParserController` interface**
+- [x] **Implement typed property getter methods**
+- [x] **Complete Property Stream Controllers**
+- [x] **Complete `PropertyStream` public API**
+- [x] **Implement `MapPropertyStream` typed methods**
+- [ ] **Implement `ListPropertyStream` typed methods**
+- [ ] **Implement `ListPropertyStream.onElement()` logic**
+  - [x] Add callback list to `ListPropertyStreamController`
+  - [ ] `ListPropertyDelegate` needs to call these callbacks when an element is
+        found.
 
 ### Delegate Implementation
 
-- [ ] **Complete `MapPropertyDelegate`**
-  - [x] Basic state machine ✓
-  - [ ] Fix key path construction (currently missing dot separator properly)
-  - [ ] Handle nested object/array values properly
-  - [ ] Handle whitespace between tokens (after `:`, `,`, etc.)
-  - [ ] Emit to map property controller correctly
-  - [ ] Test with complex nested structures
-
+- [x] **Complete `MapPropertyDelegate`**
 - [ ] **Implement `ListPropertyDelegate`**
   - [ ] Add state machine for array parsing (`waitingForValue`, `readingValue`,
         `waitingForCommaOrEnd`)
   - [ ] Handle array index in property paths (e.g., `items[0]`, `items[1]`)
   - [ ] Create child delegates for array elements
+  - [ ] **Call `onElement` callbacks _before_ delegating to child** (The "arm
+        the trap" logic)
   - [ ] Handle comma separation between elements
   - [ ] Handle empty arrays `[]`
-  - [ ] Emit array elements to list property controller
-
-- [ ] **Implement `NumberPropertyDelegate`**
-  - [ ] Buffer numeric characters (digits, decimal point, minus sign, exponent)
-  - [ ] Detect completion (comma, closing bracket, closing brace, whitespace)
-  - [ ] Parse to `int` or `double` as appropriate
-  - [ ] Emit numeric value when complete
-  - [ ] Handle scientific notation (e.g., `1.23e10`)
-  - [ ] Handle negative numbers
-
-- [ ] **Implement `BooleanPropertyDelegate`**
-  - [ ] Parse `true` (accumulate 4 characters: t-r-u-e)
-  - [ ] Parse `false` (accumulate 5 characters: f-a-l-s-e)
-  - [ ] Emit boolean value when complete
-  - [ ] Handle invalid boolean literals (error case)
-
-- [ ] **Implement `NullPropertyDelegate`**
-  - [ ] Parse `null` (accumulate 4 characters: n-u-l-l)
-  - [ ] Emit null value when complete
-  - [ ] Handle invalid null literals (error case)
+- [x] **Implement `NumberPropertyDelegate`**
+- [x] **Implement `BooleanPropertyDelegate`**
+- [x] **Implement `NullPropertyDelegate`**
 
 ### Edge Cases & Error Handling
 
 - [ ] **Whitespace handling**
-  - [ ] Skip whitespace between tokens in maps and arrays (spaces, tabs,
-        newlines)
-  - [ ] Preserve whitespace in string values (already done in
-        StringPropertyDelegate)
-
+  - [ ] Skip whitespace between tokens in maps and arrays (after `:`, `,`, etc.)
 - [ ] **Error cases**
-  - [ ] Handle malformed JSON gracefully (invalid characters, unclosed brackets)
-  - [ ] Emit errors to property streams
-  - [ ] Add validation for closing brackets/braces matching opening ones
-  - [ ] Handle unexpected characters in delegates
+  - [ ] Handle malformed JSON gracefully
   - [ ] Handle path not found errors
-  - [ ] Handle type mismatch errors (asking for String when it's a Number)
-
+  - [ ] Handle type mismatch errors (asking for `String` when it's a `Number`)
 - [ ] **Memory management**
-  - [ ] Clean up completed property controllers (prevent memory leaks)
-  - [ ] Implement buffer size limits for safety (prevent infinite string
-        accumulation)
   - [ ] Close streams properly when parsing completes
 
 ### Testing
 
-- [ ] **Unit tests for each delegate**
-  - [ ] Test `StringPropertyDelegate` with various escape sequences (`\"`, `\\`,
-        `\n`, `\t`)
-  - [ ] Test `MapPropertyDelegate` with nested objects
-  - [ ] Test `ListPropertyDelegate` with mixed-type arrays
-  - [ ] Test `NumberPropertyDelegate` with integers, decimals, and scientific
-        notation
-  - [ ] Test `BooleanPropertyDelegate` with true/false
-  - [ ] Test `NullPropertyDelegate`
-
-- [ ] **Integration tests**
-  - [ ] Test with the `testFlatMap` from test file
-  - [ ] Test with the complex `testMap` from test file
-  - [ ] Test with streaming chunks of various sizes
-  - [ ] Test property path subscriptions (both direct paths and chainable)
-  - [ ] Test chainable property access (e.g.,
-        `parser.getMapProperty("user").getStringProperty("name")`)
-  - [ ] Test LLM-like streaming scenarios (partial JSON, incremental property
-        completion)
-
-- [ ] **Performance tests**
-  - [ ] Benchmark streaming vs traditional parsing
-  - [ ] Test with realistic LLM response sizes
-  - [ ] Measure memory usage during streaming
+- [x] **Integration tests for `String`, `Number`, `Bool`, `Null`, `Map`**
+- [ ] **Implement `ListPropertyDelegate` tests**
+- [ ] Test `onElement` functionality
+- [ ] Test `ListPropertyStream` typed methods (`.getStringProperty("[0]")`)
 
 ### Documentation & Examples
 
-- [ ] **Create comprehensive examples**
-  - [x] Basic usage example ✓
-  - [x] Chainable property access example ✓
-  - [x] Working with lists example ✓
-  - [x] Real-world LLM streaming scenario ✓
-  - [x] Complex nested structures example ✓
-  - [ ] Implement examples in `/example` folder as runnable code
-  - [ ] Add error handling examples
-  - [ ] Add UI integration example (Flutter widget updating as properties
-        arrive)
-
+- [x] **Update `README.md`** (This task\!)
 - [ ] **API Documentation**
   - [ ] Document all public classes and methods with dartdocs
-  - [ ] Add examples to dartdocs
-  - [ ] Create architecture diagram (delegates, controllers, streams)
-  - [ ] Document the chainable API pattern
-
-- [ ] **Update README**
-  - [x] Add usage examples ✓
-  - [x] Document API surface ✓
-  - [x] Add real-world LLM scenarios ✓
-  - [ ] Document performance characteristics
-  - [ ] Include limitations and known issues
-  - [ ] Add comparison with traditional JSON parsing
 
 ### Polish & Release
 
-- [ ] **Code quality**
-  - [ ] Remove all `// ignore_for_file` directives and fix issues
-  - [ ] Add proper null safety annotations
-  - [ ] Follow Dart style guide
-  - [ ] Run `dart analyze` and fix all issues
-  - [ ] Run `dart format` on all files
-  - [ ] Add comprehensive inline comments
-
+- [ ] **Code quality** (Remove ignores, run `dart analyze`)
 - [ ] **Package metadata**
-  - [ ] Update `pubspec.yaml` with proper description
-  - [ ] Add repository, homepage, and issue tracker URLs
-  - [ ] Set appropriate version number (start with 0.1.0)
-  - [ ] Add license file (MIT recommended)
-  - [ ] Add package topics/tags for pub.dev
-
 - [ ] **Prepare for publication**
-  - [ ] Test with `dart pub publish --dry-run`
-  - [ ] Create comprehensive CHANGELOG.md entries
-  - [ ] Tag release in git
-  - [ ] Publish to pub.dev
-  - [ ] Create GitHub release notes
 
 ## 🎓 Next Immediate Steps
 
-Based on your current code state and the **LLM streaming use case**, here's what
-to tackle next:
+Based on your current code state:
 
-### Phase 1: Core Infrastructure (Do This First!)
+1. **Implement `ListPropertyDelegate`:**
+   - Copy the state machine structure from `MapPropertyDelegate`.
+   - Instead of `waitingForKey`, it will be `waitingForValue`.
+   - When it finds a value (e.g., `"`, `{`, `[`), it creates the child delegate.
+   - **Crucially:** _Before_ it calls `child.addCharacter()`, it must get the
+     `onElementCallbacks` from its `ListPropertyStreamController` and call them
+     _synchronously_ with the new child's public `PropertyStream` object.
+   - Then, just like in `MapPropertyDelegate`, it enters a `readingValue` state
+     and feeds characters to the child until `child.isDone` is true.
+2. **Wire up the `list_property_test.dart`:** Change the tests in that file to
+   use _your_ parser instead of `jsonDecode`, just like you did for the
+   `string`, `number`, `map`, and `boolean` test files.
+3. **Make `onElement` test pass:** This will be the final, most complex test to
+   pass, and it will prove the entire architecture works.
 
-1. **Add `StreamController<T>` to property stream controllers** - This is the
-   foundation
-2. **Implement `addToPropertyStream<T>` in `JsonStreamParserController`** -
-   Connect delegates to streams
-3. **Implement property controller registry** - Store controllers by path in a
-   `Map<String, PropertyStreamController>`
-4. **Implement typed property getters** - getStringProperty(),
-   getNumberProperty(), etc. - Parse paths and return streams
-
-### Phase 2: Make It Work End-to-End
-
-5. **Test `StringPropertyDelegate` + `StringPropertyStream`** - It's the most
-   complete delegate
-6. **Complete `MapPropertyDelegate` emission** - Make sure it properly emits to
-   its controller
-7. **Implement `MapPropertyStream` typed methods** - Enable chaining for nested
-   access
-8. **Write your first integration test** - Parse a simple LLM response like
-   `{"name": "Alice"}`
-
-### Phase 3: Complete the Delegates
-
-9. **Implement `NumberPropertyDelegate`** - Simpler than Map/List
-10. **Implement `BooleanPropertyDelegate`** - Even simpler
-11. **Implement `NullPropertyDelegate`** - Simplest
-12. **Implement `ListPropertyDelegate`** - Similar to Map but with indices
-13. **Implement `ListPropertyStream` typed methods** - Enable array access
-
-### Phase 4: Polish & Real-World Testing
-
-14. **Test with real LLM responses** - OpenAI, Anthropic, etc.
-15. **Handle edge cases** - Malformed JSON, whitespace, etc.
-16. **Optimize and document** - Make it production-ready
-
-### Quick Win Example to Test First:
-
-```dart
-// Start with this simple case - no nesting, just a string property
-final testStream = Stream.fromIterable([
-  '{"na',  // Chunk 1
-  'me":"', // Chunk 2
-  'Alice', // Chunk 3
-  '"}',    // Chunk 4
-]);
-
-final parser = JsonStreamParser(testStream);
-final nameStream = parser.getStringProperty("name");
-
-nameStream.listen((name) {
-  print("Got name: $name"); // Should print "Alice" after chunk 4
-});
-```
-
-Once this works end-to-end, everything else is just expanding on this pattern!
-🚀
-
-## 🌟 Why This Is Awesome
-
-This library enables **truly reactive UIs** for LLM applications:
-
-- 🎯 Show partial results as they stream in
-- 🚀 Start rendering before the full response completes
-- 💪 Handle complex nested structures naturally
-- 🔄 Compose property streams with Flutter StreamBuilders
-- 🎨 Create real-time AI-powered interfaces
-
-You're building something genuinely useful for the modern AI-powered app
-ecosystem! Keep going! �
+You're _so_ close. The `ListPropertyDelegate` is the final boss. Keep going\! 🚀
