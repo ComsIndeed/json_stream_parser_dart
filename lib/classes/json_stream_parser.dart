@@ -34,7 +34,8 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => StringPropertyStreamController(),
+              () =>
+                  StringPropertyStreamController(parserController: _controller),
             )
             as StringPropertyStreamController;
     return controller.propertyStream;
@@ -50,7 +51,8 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => NumberPropertyStreamController(),
+              () =>
+                  NumberPropertyStreamController(parserController: _controller),
             )
             as NumberPropertyStreamController;
     return controller.propertyStream;
@@ -67,7 +69,9 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => BooleanPropertyStreamController(),
+              () => BooleanPropertyStreamController(
+                parserController: _controller,
+              ),
             )
             as BooleanPropertyStreamController;
     return controller.propertyStream;
@@ -83,7 +87,7 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => NullPropertyStreamController(),
+              () => NullPropertyStreamController(parserController: _controller),
             )
             as NullPropertyStreamController;
     return controller.propertyStream;
@@ -99,7 +103,7 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => MapPropertyStreamController(),
+              () => MapPropertyStreamController(parserController: _controller),
             )
             as MapPropertyStreamController;
     return controller.propertyStream;
@@ -115,7 +119,7 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => ListPropertyStreamController(),
+              () => ListPropertyStreamController(parserController: _controller),
             )
             as ListPropertyStreamController;
     return controller.propertyStream;
@@ -126,17 +130,29 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(propertyPath, () {
               if (T == String) {
-                return StringPropertyStreamController();
+                return StringPropertyStreamController(
+                  parserController: _controller,
+                );
               } else if (T == num) {
-                return NumberPropertyStreamController();
+                return NumberPropertyStreamController(
+                  parserController: _controller,
+                );
               } else if (T == bool) {
-                return BooleanPropertyStreamController();
+                return BooleanPropertyStreamController(
+                  parserController: _controller,
+                );
               } else if (T == Null) {
-                return NullPropertyStreamController();
+                return NullPropertyStreamController(
+                  parserController: _controller,
+                );
               } else if (T == Map<String, Object?>) {
-                return MapPropertyStreamController();
+                return MapPropertyStreamController(
+                  parserController: _controller,
+                );
               } else if (T == List<Object?>) {
-                return ListPropertyStreamController();
+                return ListPropertyStreamController(
+                  parserController: _controller,
+                );
               } else {
                 throw UnimplementedError(
                   'No PropertyStreamController for type $T',

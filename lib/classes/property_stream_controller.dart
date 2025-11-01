@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:json_stream_parser/classes/json_stream_parser.dart';
 import 'package:json_stream_parser/classes/property_stream.dart';
 
 abstract class PropertyStreamController<T> {
@@ -8,6 +9,9 @@ abstract class PropertyStreamController<T> {
   bool get isClosed => _isClosed;
 
   Completer<T> completer = Completer<T>();
+
+  PropertyStreamController({required this.parserController});
+  final JsonStreamParserController parserController;
 
   void onClose() {
     _isClosed = true;
@@ -50,10 +54,11 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
     }
   }
 
-  StringPropertyStreamController() {
+  StringPropertyStreamController({required super.parserController}) {
     propertyStream = StringPropertyStream(
       stream: streamController.stream,
       future: completer.future,
+      parserController: parserController,
     );
   }
 }
@@ -63,8 +68,11 @@ class MapPropertyStreamController
   @override
   late final MapPropertyStream propertyStream;
 
-  MapPropertyStreamController() {
-    propertyStream = MapPropertyStream(future: completer.future);
+  MapPropertyStreamController({required super.parserController}) {
+    propertyStream = MapPropertyStream(
+      future: completer.future,
+      parserController: parserController,
+    );
   }
 }
 
@@ -73,8 +81,11 @@ class ListPropertyStreamController
   @override
   late final ListPropertyStream propertyStream;
 
-  ListPropertyStreamController() {
-    propertyStream = ListPropertyStream(future: completer.future);
+  ListPropertyStreamController({required super.parserController}) {
+    propertyStream = ListPropertyStream(
+      future: completer.future,
+      parserController: parserController,
+    );
   }
 }
 
@@ -84,8 +95,9 @@ class NumberPropertyStreamController extends PropertyStreamController<num> {
 
   final streamController = StreamController<num>();
 
-  NumberPropertyStreamController() {
+  NumberPropertyStreamController({required super.parserController}) {
     propertyStream = NumberPropertyStream(
+      parserController: parserController,
       future: completer.future,
       stream: streamController.stream,
     );
@@ -107,8 +119,9 @@ class BooleanPropertyStreamController extends PropertyStreamController<bool> {
   late final BooleanPropertyStream propertyStream;
 
   final streamController = StreamController<bool>();
-  BooleanPropertyStreamController() {
+  BooleanPropertyStreamController({required super.parserController}) {
     propertyStream = BooleanPropertyStream(
+      parserController: parserController,
       future: completer.future,
       stream: streamController.stream,
     );
@@ -131,8 +144,9 @@ class NullPropertyStreamController extends PropertyStreamController<Null> {
 
   final streamController = StreamController<Null>();
 
-  NullPropertyStreamController() {
+  NullPropertyStreamController({required super.parserController}) {
     propertyStream = NullPropertyStream(
+      parserController: parserController,
       future: completer.future,
       stream: streamController.stream,
     );

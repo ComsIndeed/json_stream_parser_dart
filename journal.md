@@ -29,6 +29,9 @@
   tweak that the AI spotted.
   - Strings now work again
   - Got to work on lists now
+  - want to ask Gemini if this move of making AI do the work is a good idea
+  - tried to let Copilot do the list delegate but its failing right now
+  - Found bugs in map nesting, where nesteds dont seem to work again
 
 ## Architecture
 

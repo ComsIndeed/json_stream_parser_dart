@@ -13,11 +13,14 @@ void main() async {
     );
 
     final parser = JsonStreamParser(stream);
-    // final childStream = parser.getStringProperty("parent.child");
 
-    // childStream.future.then((finalChild) {
-    //   print('Final child: "$finalChild" as type ${finalChild.runtimeType}');
-    // });
+    parser
+        .getMapProperty("newNested.deepChild")
+        .getStringProperty("grandChild")
+        .stream
+        .listen((value) {
+          print('Grandchild Value Chunk: $value');
+        });
 
     await Future.delayed(Duration(seconds: 1));
   } catch (e) {
