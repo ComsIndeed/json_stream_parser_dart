@@ -64,11 +64,13 @@ class BooleanPropertyStream extends PropertyStream<bool> {
 }
 
 class ListPropertyStream extends PropertyStream<List<Object?>> {
-  ListPropertyStream({required super.future, required super.parserController});
+  ListPropertyStream({
+    required super.future,
+    required super.parserController,
+    this.onElementCallbacks = const [],
+  });
 
-  void onElement(void Function(int, Object?) handleElement) {
-    throw UnimplementedError();
-  }
+  final List<void Function(PropertyStream)> onElementCallbacks;
 
   StringPropertyStream getStringProperty(String propertyPath) {
     return _parserController

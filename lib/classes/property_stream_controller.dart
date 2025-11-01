@@ -25,13 +25,6 @@ abstract class PropertyStreamController<T> {
   }
 }
 
-///
-/// ! PROPERTY CONTROLLERS
-/// "WHAT STUFF SHOULD WE BE ABLE TO INPUT INTO THE STREAMERS?"
-///
-/// VALUE ==> PROPERTY STREAMS
-///
-
 class StringPropertyStreamController extends PropertyStreamController<String> {
   @override
   late final StringPropertyStream propertyStream;
@@ -80,11 +73,17 @@ class ListPropertyStreamController
     extends PropertyStreamController<List<Object?>> {
   @override
   late final ListPropertyStream propertyStream;
+  List<void Function(PropertyStream)> onElementCallbacks = [];
+
+  void addOnElementCallback(void Function(PropertyStream) callback) {
+    onElementCallbacks.add(callback);
+  }
 
   ListPropertyStreamController({required super.parserController}) {
     propertyStream = ListPropertyStream(
       future: completer.future,
       parserController: parserController,
+      onElementCallbacks: onElementCallbacks,
     );
   }
 }

@@ -109,7 +109,10 @@ class JsonStreamParser {
     return controller.propertyStream;
   }
 
-  ListPropertyStream getListProperty(String propertyPath) {
+  ListPropertyStream getListProperty(
+    String propertyPath, {
+    void Function(PropertyStream)? onElement,
+  }) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! ListPropertyStreamController) {
       throw Exception(
@@ -122,6 +125,9 @@ class JsonStreamParser {
               () => ListPropertyStreamController(parserController: _controller),
             )
             as ListPropertyStreamController;
+    if (onElement != null) {
+      controller.addOnElementCallback(onElement);
+    }
     return controller.propertyStream;
   }
 

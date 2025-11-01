@@ -13,7 +13,7 @@ class MapPropertyDelegate extends PropertyDelegate {
     super.onComplete,
   });
 
-  MapParseState _state = MapParseState.waitingForKey;
+  MapParserState _state = MapParserState.waitingForKey;
 
   bool _firstCharacter = true;
   String _keyBuffer = "";
@@ -22,7 +22,7 @@ class MapPropertyDelegate extends PropertyDelegate {
 
   void onChildComplete() {
     _activeChildDelegate = null;
-    _state = MapParseState
+    _state = MapParserState
         .waitingForKey; // The delegate received the comma or end signal, so...
     _keyBuffer = "";
   }
@@ -43,9 +43,9 @@ class MapPropertyDelegate extends PropertyDelegate {
     //   '\nState: $_state\n Char: |$character| (${character.length})\n KeyBuffer: |$_keyBuffer|',
     // );
 
-    if (_state == MapParseState.readingKey) {
+    if (_state == MapParserState.readingKey) {
       if (character == '"') {
-        _state = MapParseState.waitingForValue;
+        _state = MapParserState.waitingForValue;
         return;
       } else {
         _keyBuffer += character;
@@ -53,16 +53,16 @@ class MapPropertyDelegate extends PropertyDelegate {
       }
     }
 
-    if (_state == MapParseState.readingValue) {
+    if (_state == MapParserState.readingValue) {
       _activeChildDelegate?.addCharacter(character);
       if (_activeChildDelegate?.isDone ?? false) {
-        _state = MapParseState.waitingForCommaOrEnd;
+        _state = MapParserState.waitingForCommaOrEnd;
         _activeChildDelegate = null;
       }
       return;
     }
 
-    if (_state == MapParseState.waitingForValue) {
+    if (_state == MapParserState.waitingForValue) {
       if (character == " " || character == ":") return;
       _activeChildDelegate = createDelegate(
         character,
@@ -71,7 +71,7 @@ class MapPropertyDelegate extends PropertyDelegate {
         onComplete: onChildComplete,
       );
       _activeChildDelegate!.addCharacter(character);
-      _state = MapParseState.readingValue;
+      _state = MapParserState.readingValue;
       return;
     }
 
@@ -80,14 +80,14 @@ class MapPropertyDelegate extends PropertyDelegate {
       return;
     }
 
-    if (character == '"' && _state == MapParseState.waitingForKey) {
-      _state = MapParseState.readingKey;
+    if (character == '"' && _state == MapParserState.waitingForKey) {
+      _state = MapParserState.readingKey;
       return;
     }
 
-    if (_state == MapParseState.waitingForCommaOrEnd) {
+    if (_state == MapParserState.waitingForCommaOrEnd) {
       if (character == ',') {
-        _state = MapParseState.waitingForKey;
+        _state = MapParserState.waitingForKey;
         _keyBuffer = "";
         return;
       } else if (character == '}') {
@@ -97,7 +97,7 @@ class MapPropertyDelegate extends PropertyDelegate {
       }
     }
 
-    if (_state == MapParseState.waitingForKey && character == "}") {
+    if (_state == MapParserState.waitingForKey && character == "}") {
       isDone = true;
       onComplete?.call();
       return;
@@ -107,7 +107,7 @@ class MapPropertyDelegate extends PropertyDelegate {
   }
 }
 
-enum MapParseState {
+enum MapParserState {
   waitingForKey,
   readingKey,
   waitingForValue,
