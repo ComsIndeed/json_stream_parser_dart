@@ -73,9 +73,11 @@ class ListPropertyStreamController
     extends PropertyStreamController<List<Object?>> {
   @override
   late final ListPropertyStream propertyStream;
-  List<void Function(PropertyStream)> onElementCallbacks = [];
+  List<void Function(PropertyStream, int)> onElementCallbacks = [];
 
-  void addOnElementCallback(void Function(PropertyStream) callback) {
+  void addOnElementCallback(
+    void Function(PropertyStream propertyStream, int index) callback,
+  ) {
     onElementCallbacks.add(callback);
   }
 

@@ -34,11 +34,15 @@ class ListPropertyDelegate extends PropertyDelegate {
   void onChildComplete() {
     _isReadingValue = false;
     _activeChildDelegate = null;
+    _index += 1;
   }
 
   bool _isFirstCharacter = true;
   bool _isReadingValue = false;
   PropertyDelegate? _activeChildDelegate;
+
+  int _index = 0;
+  String get _currentElementPath => '$propertyPath[$_index]';
 
   @override
   void addCharacter(String character) {
@@ -51,13 +55,13 @@ class ListPropertyDelegate extends PropertyDelegate {
       _isReadingValue = true;
       final delegate = createDelegate(
         character,
-        propertyPath: propertyPath,
+        propertyPath: _currentElementPath,
         jsonStreamParserController: parserController,
         onComplete: onChildComplete,
       );
       for (final callback in onElementCallbacks) {
         final controller = parserController.getPropertyStreamController(
-          propertyPath,
+          _currentElementPath,
         );
         callback(controller.propertyStream);
       }
@@ -66,6 +70,16 @@ class ListPropertyDelegate extends PropertyDelegate {
 
     if (_isReadingValue) {
       _activeChildDelegate?.addCharacter(character);
+    }
+
+    if (!_isReadingValue && [',', ' '].contains(character)) {
+      // Just a separator, do nothing
+      return;
+    }
+
+    if (character == ']') {
+      isDone = true;
+      onComplete?.call();
     }
   }
 }

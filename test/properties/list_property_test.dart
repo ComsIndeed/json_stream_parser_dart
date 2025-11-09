@@ -272,7 +272,7 @@ void main() {
 
       // Collect elements as they're emitted
       final elements = <String>[];
-      colorsStream.onElement((index, element) {
+      colorsStream.onElement((element, index) {
         if (verbose) print('[ELEMENT] [$index]: $element');
         elements.add(element as String);
       });

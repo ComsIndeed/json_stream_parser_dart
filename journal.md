@@ -35,6 +35,8 @@
   - Found issues with type casting in main parser on the addPropertyChunk
     method:
     > `type 'MapPropertyStreamController' is not a subtype of type 'PropertyStreamController<String>' in type cast`
+  - Completely forgot about why I had this issue above this line, moved onto other stuff for now
+  - Added onElement callback on public API for ListPropertyStream
 
 ## Architecture
 

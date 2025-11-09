@@ -70,7 +70,12 @@ class ListPropertyStream extends PropertyStream<List<Object?>> {
     this.onElementCallbacks = const [],
   });
 
-  final List<void Function(PropertyStream)> onElementCallbacks;
+  final List<void Function(PropertyStream, int)> onElementCallbacks;
+  void onElement(
+    void Function(PropertyStream propertyStream, int index) callback,
+  ) {
+    onElementCallbacks.add(callback);
+  }
 
   StringPropertyStream getStringProperty(String propertyPath) {
     return _parserController
