@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:json_stream_parser/classes/json_stream_parser.dart';
+import 'package:json_stream_parser/classes/property_stream_controller.dart';
 
 abstract class PropertyStream<T> {
   final Future<T> _future;
@@ -64,103 +65,126 @@ class BooleanPropertyStream extends PropertyStream<bool> {
 }
 
 class ListPropertyStream extends PropertyStream<List<Object?>> {
+  final String _propertyPath;
+
   ListPropertyStream({
     required super.future,
     required super.parserController,
-    this.onElementCallbacks = const [],
-  });
+    required String propertyPath,
+  }) : _propertyPath = propertyPath;
 
-  final List<void Function(PropertyStream, int)> onElementCallbacks;
   void onElement(
     void Function(PropertyStream propertyStream, int index) callback,
   ) {
-    onElementCallbacks.add(callback);
+    // Add callback to the controller's list, not our local copy
+    final controller =
+        _parserController.getPropertyStreamController(_propertyPath)
+            as ListPropertyStreamController;
+    controller.addOnElementCallback(callback);
   }
 
-  StringPropertyStream getStringProperty(String propertyPath) {
+  StringPropertyStream getStringProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as StringPropertyStream;
   }
 
-  BooleanPropertyStream getBooleanProperty(String propertyPath) {
+  BooleanPropertyStream getBooleanProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as BooleanPropertyStream;
   }
 
-  NumberPropertyStream getNumberProperty(String propertyPath) {
+  NumberPropertyStream getNumberProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as NumberPropertyStream;
   }
 
-  NullPropertyStream getNullProperty(String propertyPath) {
+  NullPropertyStream getNullProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as NullPropertyStream;
   }
 
-  MapPropertyStream getMapProperty(String propertyPath) {
+  MapPropertyStream getMapProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as MapPropertyStream;
   }
 
-  ListPropertyStream getListProperty(String propertyPath) {
+  ListPropertyStream getListProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as ListPropertyStream;
   }
 }
 
 class MapPropertyStream extends PropertyStream<Map<String, Object?>> {
-  MapPropertyStream({required super.future, required super.parserController});
+  final String _propertyPath;
 
-  StringPropertyStream getStringProperty(String propertyPath) {
+  MapPropertyStream({
+    required super.future,
+    required super.parserController,
+    required String propertyPath,
+  }) : _propertyPath = propertyPath;
+
+  StringPropertyStream getStringProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as StringPropertyStream;
   }
 
-  BooleanPropertyStream getBooleanProperty(String propertyPath) {
+  BooleanPropertyStream getBooleanProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as BooleanPropertyStream;
   }
 
-  NumberPropertyStream getNumberProperty(String propertyPath) {
+  NumberPropertyStream getNumberProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as NumberPropertyStream;
   }
 
-  NullPropertyStream getNullProperty(String propertyPath) {
+  NullPropertyStream getNullProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as NullPropertyStream;
   }
 
-  MapPropertyStream getMapProperty(String propertyPath) {
+  MapPropertyStream getMapProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as MapPropertyStream;
   }
 
-  ListPropertyStream getListProperty(String propertyPath) {
+  ListPropertyStream getListProperty(String key) {
+    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
-            .getPropertyStreamController(propertyPath)
+            .getPropertyStreamController(fullPath)
             .propertyStream
         as ListPropertyStream;
   }

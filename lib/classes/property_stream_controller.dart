@@ -10,8 +10,12 @@ abstract class PropertyStreamController<T> {
 
   Completer<T> completer = Completer<T>();
 
-  PropertyStreamController({required this.parserController});
+  PropertyStreamController({
+    required this.parserController,
+    required this.propertyPath,
+  });
   final JsonStreamParserController parserController;
+  final String propertyPath;
 
   void onClose() {
     _isClosed = true;
@@ -47,7 +51,10 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
     }
   }
 
-  StringPropertyStreamController({required super.parserController}) {
+  StringPropertyStreamController({
+    required super.parserController,
+    required super.propertyPath,
+  }) {
     propertyStream = StringPropertyStream(
       stream: streamController.stream,
       future: completer.future,
@@ -61,10 +68,14 @@ class MapPropertyStreamController
   @override
   late final MapPropertyStream propertyStream;
 
-  MapPropertyStreamController({required super.parserController}) {
+  MapPropertyStreamController({
+    required super.parserController,
+    required super.propertyPath,
+  }) {
     propertyStream = MapPropertyStream(
       future: completer.future,
       parserController: parserController,
+      propertyPath: propertyPath,
     );
   }
 }
@@ -81,11 +92,14 @@ class ListPropertyStreamController
     onElementCallbacks.add(callback);
   }
 
-  ListPropertyStreamController({required super.parserController}) {
+  ListPropertyStreamController({
+    required super.parserController,
+    required super.propertyPath,
+  }) {
     propertyStream = ListPropertyStream(
       future: completer.future,
       parserController: parserController,
-      onElementCallbacks: onElementCallbacks,
+      propertyPath: propertyPath,
     );
   }
 }
@@ -96,7 +110,10 @@ class NumberPropertyStreamController extends PropertyStreamController<num> {
 
   final streamController = StreamController<num>();
 
-  NumberPropertyStreamController({required super.parserController}) {
+  NumberPropertyStreamController({
+    required super.parserController,
+    required super.propertyPath,
+  }) {
     propertyStream = NumberPropertyStream(
       parserController: parserController,
       future: completer.future,
@@ -120,7 +137,10 @@ class BooleanPropertyStreamController extends PropertyStreamController<bool> {
   late final BooleanPropertyStream propertyStream;
 
   final streamController = StreamController<bool>();
-  BooleanPropertyStreamController({required super.parserController}) {
+  BooleanPropertyStreamController({
+    required super.parserController,
+    required super.propertyPath,
+  }) {
     propertyStream = BooleanPropertyStream(
       parserController: parserController,
       future: completer.future,
@@ -145,7 +165,10 @@ class NullPropertyStreamController extends PropertyStreamController<Null> {
 
   final streamController = StreamController<Null>();
 
-  NullPropertyStreamController({required super.parserController}) {
+  NullPropertyStreamController({
+    required super.parserController,
+    required super.propertyPath,
+  }) {
     propertyStream = NullPropertyStream(
       parserController: parserController,
       future: completer.future,

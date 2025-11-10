@@ -20,6 +20,7 @@ class JsonStreamParser {
     _controller = JsonStreamParserController(
       addPropertyChunk: _addPropertyChunk,
       getPropertyStreamController: _getControllerForPath,
+      getPropertyStream: _getPropertyStream,
     );
   }
 
@@ -34,8 +35,10 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () =>
-                  StringPropertyStreamController(parserController: _controller),
+              () => StringPropertyStreamController(
+                parserController: _controller,
+                propertyPath: propertyPath,
+              ),
             )
             as StringPropertyStreamController;
     return controller.propertyStream;
@@ -51,8 +54,10 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () =>
-                  NumberPropertyStreamController(parserController: _controller),
+              () => NumberPropertyStreamController(
+                parserController: _controller,
+                propertyPath: propertyPath,
+              ),
             )
             as NumberPropertyStreamController;
     return controller.propertyStream;
@@ -71,6 +76,7 @@ class JsonStreamParser {
               propertyPath,
               () => BooleanPropertyStreamController(
                 parserController: _controller,
+                propertyPath: propertyPath,
               ),
             )
             as BooleanPropertyStreamController;
@@ -87,7 +93,10 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => NullPropertyStreamController(parserController: _controller),
+              () => NullPropertyStreamController(
+                parserController: _controller,
+                propertyPath: propertyPath,
+              ),
             )
             as NullPropertyStreamController;
     return controller.propertyStream;
@@ -103,7 +112,10 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => MapPropertyStreamController(parserController: _controller),
+              () => MapPropertyStreamController(
+                parserController: _controller,
+                propertyPath: propertyPath,
+              ),
             )
             as MapPropertyStreamController;
     return controller.propertyStream;
@@ -111,7 +123,7 @@ class JsonStreamParser {
 
   ListPropertyStream getListProperty(
     String propertyPath, {
-    void Function(PropertyStream)? onElement,
+    void Function(PropertyStream, int)? onElement,
   }) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! ListPropertyStreamController) {
@@ -122,7 +134,10 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => ListPropertyStreamController(parserController: _controller),
+              () => ListPropertyStreamController(
+                parserController: _controller,
+                propertyPath: propertyPath,
+              ),
             )
             as ListPropertyStreamController;
     if (onElement != null) {
@@ -138,26 +153,32 @@ class JsonStreamParser {
               if (T == String) {
                 return StringPropertyStreamController(
                   parserController: _controller,
+                  propertyPath: propertyPath,
                 );
               } else if (T == num) {
                 return NumberPropertyStreamController(
                   parserController: _controller,
+                  propertyPath: propertyPath,
                 );
               } else if (T == bool) {
                 return BooleanPropertyStreamController(
                   parserController: _controller,
+                  propertyPath: propertyPath,
                 );
               } else if (T == Null) {
                 return NullPropertyStreamController(
                   parserController: _controller,
+                  propertyPath: propertyPath,
                 );
               } else if (T == Map<String, Object?>) {
                 return MapPropertyStreamController(
                   parserController: _controller,
+                  propertyPath: propertyPath,
                 );
               } else if (T == List<Object?>) {
                 return ListPropertyStreamController(
                   parserController: _controller,
+                  propertyPath: propertyPath,
                 );
               } else {
                 throw UnimplementedError(
@@ -200,7 +221,6 @@ class JsonStreamParser {
 
   // * Memories
   final Map<String, PropertyStreamController> _propertyControllers = {};
-  final Set<String> _previousPropertyControllerKeys = {};
 
   // * States
   PropertyDelegate? _rootDelegate;
@@ -208,6 +228,32 @@ class JsonStreamParser {
   // * Helpers
   PropertyStreamController _getControllerForPath(String propertyPath) {
     return _propertyControllers[propertyPath]!;
+  }
+
+  PropertyStream _getPropertyStream(String propertyPath, Type streamType) {
+    // If controller already exists (e.g., user called getXxxProperty before parsing),
+    // just return its property stream instead of trying to create a new one
+    final existingController = _propertyControllers[propertyPath];
+    if (existingController != null) {
+      return existingController.propertyStream;
+    }
+
+    // Otherwise create the appropriate controller based on type
+    if (streamType == String) {
+      return getStringProperty(propertyPath);
+    } else if (streamType == num) {
+      return getNumberProperty(propertyPath);
+    } else if (streamType == bool) {
+      return getBooleanProperty(propertyPath);
+    } else if (streamType == Null) {
+      return getNullProperty(propertyPath);
+    } else if (streamType == Map) {
+      return getMapProperty(propertyPath);
+    } else if (streamType == List) {
+      return getListProperty(propertyPath);
+    } else {
+      throw Exception('Unknown stream type: $streamType');
+    }
   }
 
   void _parseChunk(String chunk) {
@@ -244,6 +290,7 @@ class JsonStreamParserController {
   JsonStreamParserController({
     required this.addPropertyChunk,
     required this.getPropertyStreamController,
+    required this.getPropertyStream,
   });
 
   final void Function<T>({required String propertyPath, required T chunk})
@@ -251,4 +298,9 @@ class JsonStreamParserController {
 
   PropertyStreamController Function(String propertyPath)
   getPropertyStreamController;
+
+  /// Gets a PropertyStream for the given path, creating the controller if needed.
+  /// The type parameter indicates what kind of stream to create.
+  final PropertyStream Function(String propertyPath, Type streamType)
+  getPropertyStream;
 }

@@ -1,10 +1,26 @@
+import 'dart:async';
+
 import 'package:json_stream_parser/classes/json_stream_parser.dart';
+import 'package:json_stream_parser/classes/property_stream.dart';
 import 'package:test/test.dart';
-import 'package:json_stream_parser/json_stream_parser.dart';
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
 /// Enable verbose logging to debug test execution
 const bool verbose = false;
+
+/// Test timeout - fail if not done within this duration
+const testTimeout = Duration(seconds: 5);
+
+/// Helper to add timeout to futures
+extension FutureTimeout<T> on Future<T> {
+  Future<T> withTestTimeout() => timeout(
+    testTimeout,
+    onTimeout: () => throw TimeoutException(
+      'Test timed out after ${testTimeout.inSeconds} seconds',
+      testTimeout,
+    ),
+  );
+}
 
 void main() {
   group('List Property Tests', () {
@@ -22,7 +38,7 @@ void main() {
       final parser = JsonStreamParser(stream);
 
       final numbersStream = parser.getListProperty("numbers");
-      final numbers = await numbersStream.future;
+      final numbers = await numbersStream.future.withTestTimeout();
 
       if (verbose) print('[FINAL] $numbers');
 
@@ -45,7 +61,7 @@ void main() {
       final parser = JsonStreamParser(stream);
 
       final namesStream = parser.getListProperty("names");
-      final names = await namesStream.future;
+      final names = await namesStream.future.withTestTimeout();
 
       if (verbose) print('[FINAL] $names');
 
@@ -69,9 +85,9 @@ void main() {
       final secondStream = parser.getStringProperty("items[1]");
       final thirdStream = parser.getStringProperty("items[2]");
 
-      final first = await firstStream.future;
-      final second = await secondStream.future;
-      final third = await thirdStream.future;
+      final first = await firstStream.future.withTestTimeout();
+      final second = await secondStream.future.withTestTimeout();
+      final third = await thirdStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] items[0]: $first');
@@ -103,10 +119,10 @@ void main() {
       final secondNameStream = parser.getStringProperty("items[1].name");
       final secondPriceStream = parser.getNumberProperty("items[1].price");
 
-      final firstName = await firstNameStream.future;
-      final firstPrice = await firstPriceStream.future;
-      final secondName = await secondNameStream.future;
-      final secondPrice = await secondPriceStream.future;
+      final firstName = await firstNameStream.future.withTestTimeout();
+      final firstPrice = await firstPriceStream.future.withTestTimeout();
+      final secondName = await secondNameStream.future.withTestTimeout();
+      final secondPrice = await secondPriceStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] items[0].name: $firstName');
@@ -135,7 +151,7 @@ void main() {
       final parser = JsonStreamParser(stream);
 
       final emptyStream = parser.getListProperty("empty");
-      final empty = await emptyStream.future;
+      final empty = await emptyStream.future.withTestTimeout();
 
       if (verbose) print('[FINAL] $empty');
 
@@ -162,10 +178,10 @@ void main() {
       final val10Stream = parser.getNumberProperty("matrix[1][0]");
       final val11Stream = parser.getNumberProperty("matrix[1][1]");
 
-      final val00 = await val00Stream.future;
-      final val01 = await val01Stream.future;
-      final val10 = await val10Stream.future;
-      final val11 = await val11Stream.future;
+      final val00 = await val00Stream.future.withTestTimeout();
+      final val01 = await val01Stream.future.withTestTimeout();
+      final val10 = await val10Stream.future.withTestTimeout();
+      final val11 = await val11Stream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] matrix[0][0]: $val00');
@@ -198,10 +214,10 @@ void main() {
       final boolStream = parser.getBooleanProperty("mixed[2]");
       final nullStream = parser.getNullProperty("mixed[3]");
 
-      final text = await textStream.future;
-      final numValue = await numStream.future;
-      final boolValue = await boolStream.future;
-      final nullVal = await nullStream.future;
+      final text = await textStream.future.withTestTimeout();
+      final numValue = await numStream.future.withTestTimeout();
+      final boolValue = await boolStream.future.withTestTimeout();
+      final nullVal = await nullStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] mixed[0]: $text');
@@ -231,7 +247,7 @@ void main() {
 
       // Get list first
       final dataStream = parser.getListProperty("data");
-      final data = await dataStream.future;
+      final data = await dataStream.future.withTestTimeout();
 
       if (verbose) print('[GOT LIST] data: $data');
 
@@ -240,9 +256,9 @@ void main() {
       final secondStream = dataStream.getNumberProperty("[1]");
       final thirdStream = dataStream.getNumberProperty("[2]");
 
-      final first = await firstStream.future;
-      final second = await secondStream.future;
-      final third = await thirdStream.future;
+      final first = await firstStream.future.withTestTimeout();
+      final second = await secondStream.future.withTestTimeout();
+      final third = await thirdStream.future.withTestTimeout();
 
       if (verbose) {
         print('[CHAINED] [0]: $first');
@@ -272,13 +288,16 @@ void main() {
 
       // Collect elements as they're emitted
       final elements = <String>[];
-      colorsStream.onElement((element, index) {
-        if (verbose) print('[ELEMENT] [$index]: $element');
-        elements.add(element as String);
+      colorsStream.onElement((element, index) async {
+        if (verbose)
+          print('[ELEMENT] [$index]: $element (type: ${element.runtimeType})');
+        final value = await (element as StringPropertyStream).future;
+        if (verbose) print('[ELEMENT VALUE] [$index]: $value');
+        elements.add(value);
       });
 
       // Wait for list to complete
-      await colorsStream.future;
+      await colorsStream.future.withTestTimeout();
 
       if (verbose) print('[ALL ELEMENTS] $elements');
 
@@ -329,7 +348,7 @@ void main() {
       final parser = JsonStreamParser(stream);
 
       final valuesStream = parser.getListProperty("values");
-      final values = await valuesStream.future;
+      final values = await valuesStream.future.withTestTimeout();
 
       if (verbose) print('[FINAL] $values');
 
@@ -350,7 +369,7 @@ void main() {
       final parser = JsonStreamParser(stream);
 
       final singleStream = parser.getListProperty("single");
-      final single = await singleStream.future;
+      final single = await singleStream.future.withTestTimeout();
 
       if (verbose) print('[FINAL] $single');
 
