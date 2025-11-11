@@ -35,8 +35,10 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
 
   String _buffer = "";
   void addChunk(String chunk) {
-    _buffer += chunk;
-    streamController.add(chunk);
+    if (!_isClosed) {
+      _buffer += chunk;
+      streamController.add(chunk);
+    }
   }
 
   final streamController = StreamController<String>();

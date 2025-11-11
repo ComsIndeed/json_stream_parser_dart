@@ -1,6 +1,5 @@
 import 'package:json_stream_parser/classes/json_stream_parser.dart';
 import 'package:test/test.dart';
-import 'package:json_stream_parser/json_stream_parser.dart';
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
 /// Enable verbose logging to debug test execution

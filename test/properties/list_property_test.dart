@@ -289,10 +289,13 @@ void main() {
       // Collect elements as they're emitted
       final elements = <String>[];
       colorsStream.onElement((element, index) async {
-        if (verbose)
+        if (verbose) {
           print('[ELEMENT] [$index]: $element (type: ${element.runtimeType})');
+        }
         final value = await (element as StringPropertyStream).future;
-        if (verbose) print('[ELEMENT VALUE] [$index]: $value');
+        if (verbose) {
+          print('[ELEMENT VALUE] [$index]: $value');
+        }
         elements.add(value);
       });
 

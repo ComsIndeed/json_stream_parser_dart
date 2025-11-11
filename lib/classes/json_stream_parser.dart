@@ -202,16 +202,22 @@ class JsonStreamParser {
         stringController.addChunk(chunk as String);
       } else if (controller is NumberPropertyStreamController) {
         final numberController = controller as NumberPropertyStreamController;
-        numberController.streamController.add(chunk as num);
-        numberController.complete(chunk as num);
+        if (!numberController.isClosed) {
+          numberController.streamController.add(chunk as num);
+          numberController.complete(chunk as num);
+        }
       } else if (controller is BooleanPropertyStreamController) {
         final booleanController = controller as BooleanPropertyStreamController;
-        booleanController.streamController.add(chunk as bool);
-        booleanController.complete(chunk as bool);
+        if (!booleanController.isClosed) {
+          booleanController.streamController.add(chunk as bool);
+          booleanController.complete(chunk as bool);
+        }
       } else if (controller is NullPropertyStreamController) {
         final nullController = controller as NullPropertyStreamController;
-        nullController.streamController.add(chunk as Null);
-        nullController.complete(chunk as Null);
+        if (!nullController.isClosed) {
+          nullController.streamController.add(chunk as Null);
+          nullController.complete(chunk as Null);
+        }
       }
     }
   }
