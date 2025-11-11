@@ -1,15 +1,22 @@
 name: json_stream_parser
-description: A starting point for Dart libraries or applications.
+description: A streaming JSON parser optimized for LLM responses. Parse JSON reactively as it streams in, with path-based subscriptions and type-safe property access.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/ComsIndeed/json_stream_parser_dart
+homepage: https://github.com/ComsIndeed/json_stream_parser_dart
+issue_tracker: https://github.com/ComsIndeed/json_stream_parser_dart/issues
+
+topics:
+  - json
+  - streaming
+  - parser
+  - llm
+  - reactive
 
 environment:
-  sdk: ^3.9.2
+  sdk: ^3.0.0
 
-# Add regular dependencies here.
 dependencies:
   meta: ^1.17.0
-  # path: ^1.9.0
 
 dev_dependencies:
   lints: ^6.0.0
