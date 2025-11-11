@@ -1,6 +1,5 @@
 import 'package:json_stream_parser/classes/json_stream_parser.dart';
 import 'package:test/test.dart';
-import 'package:json_stream_parser/json_stream_parser.dart';
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
 import 'list_property_test.dart';
@@ -23,15 +22,20 @@ void main() {
       );
       final parser = JsonStreamParser(stream);
 
-      // Get the root map
-      final mapStream = parser.getMapProperty(".");
+      // Get the root map (empty string path represents root)
+      final mapStream = parser.getMapProperty("");
+      final nameStream = parser.getStringProperty("name");
+      final ageStream = parser.getNumberProperty("age");
 
       final finalMap = await mapStream.future.withTestTimeout();
-      if (verbose) print('[FINAL] $finalMap');
+      final name = await nameStream.future.withTestTimeout();
+      final age = await ageStream.future.withTestTimeout();
+
+      if (verbose) print('[FINAL] Map completed, name: $name, age: $age');
 
       expect(finalMap, isA<Map>());
-      expect(finalMap['name'], equals('Alice'));
-      expect(finalMap['age'], equals(30));
+      expect(name, equals('Alice'));
+      expect(age, equals(30));
     });
 
     test('get specific property from flat map', () async {
@@ -75,15 +79,20 @@ void main() {
       );
       final parser = JsonStreamParser(stream);
 
-      // Get nested map
+      // Get nested map and its properties
       final userMapStream = parser.getMapProperty("user");
-      final userMap = await userMapStream.future.withTestTimeout();
+      final nameStream = parser.getStringProperty("user.name");
+      final ageStream = parser.getNumberProperty("user.age");
 
-      if (verbose) print('[FINAL] user: $userMap');
+      final userMap = await userMapStream.future.withTestTimeout();
+      final name = await nameStream.future.withTestTimeout();
+      final age = await ageStream.future.withTestTimeout();
+
+      if (verbose) print('[FINAL] user map completed, name: $name, age: $age');
 
       expect(userMap, isA<Map>());
-      expect(userMap['name'], equals('Charlie'));
-      expect(userMap['age'], equals(35));
+      expect(name, equals('Charlie'));
+      expect(age, equals(35));
     });
 
     test('nested map access - deep path', () async {

@@ -84,50 +84,51 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>> {
   }
 
   StringPropertyStream getStringProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    // For array indices like "[0]", don't add a dot separator
+    final fullPath = _propertyPath.isEmpty
+        ? key
+        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
+    return _parserController.getPropertyStream(fullPath, String)
         as StringPropertyStream;
   }
 
   BooleanPropertyStream getBooleanProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    final fullPath = _propertyPath.isEmpty
+        ? key
+        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
+    return _parserController.getPropertyStream(fullPath, bool)
         as BooleanPropertyStream;
   }
 
   NumberPropertyStream getNumberProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    final fullPath = _propertyPath.isEmpty
+        ? key
+        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
+    return _parserController.getPropertyStream(fullPath, num)
         as NumberPropertyStream;
   }
 
   NullPropertyStream getNullProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    final fullPath = _propertyPath.isEmpty
+        ? key
+        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
+    return _parserController.getPropertyStream(fullPath, Null)
         as NullPropertyStream;
   }
 
   MapPropertyStream getMapProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    final fullPath = _propertyPath.isEmpty
+        ? key
+        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
+    return _parserController.getPropertyStream(fullPath, Map)
         as MapPropertyStream;
   }
 
   ListPropertyStream<E> getListProperty<E extends Object?>(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    final fullPath = _propertyPath.isEmpty
+        ? key
+        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
+    return _parserController.getPropertyStream(fullPath, List)
         as ListPropertyStream<E>;
   }
 }
@@ -143,49 +144,37 @@ class MapPropertyStream extends PropertyStream<Map<String, Object?>> {
 
   StringPropertyStream getStringProperty(String key) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    return _parserController.getPropertyStream(fullPath, String)
         as StringPropertyStream;
   }
 
   BooleanPropertyStream getBooleanProperty(String key) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    return _parserController.getPropertyStream(fullPath, bool)
         as BooleanPropertyStream;
   }
 
   NumberPropertyStream getNumberProperty(String key) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    return _parserController.getPropertyStream(fullPath, num)
         as NumberPropertyStream;
   }
 
   NullPropertyStream getNullProperty(String key) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    return _parserController.getPropertyStream(fullPath, Null)
         as NullPropertyStream;
   }
 
   MapPropertyStream getMapProperty(String key) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    return _parserController.getPropertyStream(fullPath, Map)
         as MapPropertyStream;
   }
 
   ListPropertyStream<E> getListProperty<E extends Object?>(String key) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController
-            .getPropertyStreamController(fullPath)
-            .propertyStream
+    return _parserController.getPropertyStream(fullPath, List)
         as ListPropertyStream<E>;
   }
 }

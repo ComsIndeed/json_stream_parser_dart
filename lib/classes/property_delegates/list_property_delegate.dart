@@ -47,12 +47,13 @@ class ListPropertyDelegate extends PropertyDelegate {
 
   @override
   void onChunkEnd() {
-    _activeChildDelegate?.onChunkEnd();
+    if (_activeChildDelegate != null && !_activeChildDelegate!.isDone) {
+      _activeChildDelegate?.onChunkEnd();
+    }
   }
 
   @override
   void addCharacter(String character) {
-    print("\nSTATE: ${_state.name}\nCHARACTER: |$character|\n");
     // Handle opening bracket
     if (_isFirstCharacter && character == '[') {
       _isFirstCharacter = false;
@@ -70,15 +71,25 @@ class ListPropertyDelegate extends PropertyDelegate {
     }
 
     if (_state == ListParserState.readingValue) {
-      _activeChildDelegate?.addCharacter(character);
+      // Store the delegate reference before calling addCharacter
+      // because onComplete callback might clear it
+      final childDelegate = _activeChildDelegate;
+      childDelegate?.addCharacter(character);
 
       // If child completed, we need to reprocess this character
       // in case it's a delimiter (like comma for numbers)
-      if (_activeChildDelegate?.isDone == true) {
+      if (childDelegate?.isDone == true) {
         _activeChildDelegate = null;
         _index++;
         _state = ListParserState.waitingForCommaOrEnd;
-        // Don't return - reprocess the character in the new state
+        // Only reprocess if the child is NOT a list or map
+        // (lists and maps consume their own closing brackets)
+        final childType = childDelegate.runtimeType.toString();
+        if (childType == 'ListPropertyDelegate' ||
+            childType == 'MapPropertyDelegate') {
+          return; // Don't reprocess - child consumed the closing bracket
+        }
+        // For other types (numbers, strings, etc), reprocess the delimiter
       } else {
         return;
       }
@@ -107,8 +118,6 @@ class ListPropertyDelegate extends PropertyDelegate {
           _currentElementPath,
           streamType,
         );
-
-        print('GOT: $streamType for $character');
 
         // Invoke onElement callbacks if anyone is listening (i.e., if the list controller exists)
         // Note: The list controller only exists if someone called getListProperty() on this path
@@ -148,7 +157,6 @@ class ListPropertyDelegate extends PropertyDelegate {
     if (_state == ListParserState.waitingForCommaOrEnd) {
       if (character == ',') {
         _state = ListParserState.waitingForValue;
-        print('GOT COMMA');
         return;
       } else if (character == ']') {
         _completeList();
@@ -170,14 +178,22 @@ class ListPropertyDelegate extends PropertyDelegate {
         final value = await controller.completer.future;
         elements.add(value);
       } catch (e) {
+        // Controller doesn't exist - this shouldn't happen in normal operation
+        // but we'll handle it gracefully
         elements.add(null);
       }
     }
 
-    parserController.addPropertyChunk<List<Object?>>(
-      propertyPath: propertyPath,
-      chunk: elements,
-    );
+    // Complete the list controller with the accumulated elements
+    try {
+      final listController = parserController.getPropertyStreamController(
+        propertyPath,
+      );
+      listController.complete(elements);
+    } catch (e) {
+      // If there's no list controller, it means no one subscribed to this list
+      // This is fine - we just won't complete anything
+    }
 
     onComplete?.call();
   }

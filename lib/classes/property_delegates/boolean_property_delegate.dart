@@ -14,15 +14,13 @@ class BooleanPropertyDelegate extends PropertyDelegate {
         propertyPath: propertyPath,
         chunk: true,
       );
-      parserController.getPropertyStreamController(propertyPath).complete(true);
+      // addPropertyChunk already completes the controller
     } else if (character == "f") {
       parserController.addPropertyChunk<bool>(
         propertyPath: propertyPath,
         chunk: false,
       );
-      parserController
-          .getPropertyStreamController(propertyPath)
-          .complete(false);
+      // addPropertyChunk already completes the controller
     } else if (character == "," || character == "}" || character == "]") {
       isDone = true;
       onComplete?.call();

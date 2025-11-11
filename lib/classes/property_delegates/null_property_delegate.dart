@@ -14,7 +14,7 @@ class NullPropertyDelegate extends PropertyDelegate {
         propertyPath: propertyPath,
         chunk: null,
       );
-      parserController.getPropertyStreamController(propertyPath).complete(null);
+      // addPropertyChunk already completes the controller
     } else if (character == "," || character == "}" || character == "]") {
       isDone = true;
       onComplete?.call();

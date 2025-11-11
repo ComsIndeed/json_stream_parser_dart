@@ -14,7 +14,7 @@
 include: package:lints/recommended.yaml
 analyzer:
   errors:
-    prefer_final_fields: ignore ignore
+    prefer_final_fields: ignore
 
 # Uncomment the following section to specify additional rules.
 

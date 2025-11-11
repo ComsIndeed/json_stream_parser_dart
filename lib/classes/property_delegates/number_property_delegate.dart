@@ -19,11 +19,13 @@ class NumberPropertyDelegate extends PropertyDelegate {
         character == "\n" ||
         character == "\r" ||
         character == "\t") {
-      if (_buffer.isNotEmpty) {
+      if (_buffer.isNotEmpty && !isDone) {
+        isDone = true; // Mark done BEFORE completing to prevent re-entry
         _completeNumber();
+        onComplete?.call();
       }
-      isDone = true;
-      onComplete?.call();
+      // Don't consume the character - let the parent handle delimiters
+      // The parent will reprocess this character after seeing isDone=true
       return;
     }
 
@@ -43,6 +45,8 @@ class NumberPropertyDelegate extends PropertyDelegate {
   }
 
   void _completeNumber() {
+    if (_buffer.isEmpty) return; // Defensive check
+
     final numberString = _buffer.toString();
     final number = num.parse(numberString);
 
@@ -50,8 +54,8 @@ class NumberPropertyDelegate extends PropertyDelegate {
       propertyPath: propertyPath,
       chunk: number,
     );
-    parserController.getPropertyStreamController(propertyPath).complete(number);
-    onComplete?.call();
-    print('Completed number property at $propertyPath: $number');
+
+    _buffer.clear(); // Clear buffer to prevent re-use
+    // Note: addPropertyChunk already completes the controller, so we don't need to call complete again
   }
 }

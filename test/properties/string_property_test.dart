@@ -50,8 +50,8 @@ void main() {
     test('string with escape sequences - newline', () async {
       if (verbose) print('\n[TEST] String with newline escape');
 
-      // TODO: Reconsider if the expected finalValue should contain the literal \n or an actual newline character
-      final json = '{"text":"Hello\\\nWorld"}';
+      // JSON with \n escape sequence should produce an actual newline character
+      final json = '{"text":"Hello\\nWorld"}';
       if (verbose) print('[JSON] $json');
 
       final stream = streamTextInChunks(
@@ -79,7 +79,8 @@ void main() {
     test('string with escape sequences - tab', () async {
       if (verbose) print('\n[TEST] String with tab escape');
 
-      final json = '{"text":"Hello\\\tWorld"}';
+      // JSON with \t escape sequence should produce an actual tab character
+      final json = '{"text":"Hello\\tWorld"}';
       if (verbose) print('[JSON] $json');
 
       final stream = streamTextInChunks(
@@ -107,7 +108,8 @@ void main() {
     test('string with escaped quotes inside', () async {
       if (verbose) print('\n[TEST] String with escaped quotes');
 
-      final json = '{"quote":"She said \\\\"Hi\\\\""}';
+      // JSON with \" escape sequences should produce actual quote characters
+      final json = '{"quote":"She said \\"Hi\\""}';
       if (verbose) print('[JSON] $json');
 
       final stream = streamTextInChunks(
