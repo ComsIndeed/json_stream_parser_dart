@@ -2,6 +2,8 @@ import 'package:json_stream_parser/classes/json_stream_parser.dart';
 import 'package:test/test.dart';
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
+import 'list_property_test.dart';
+
 /// Enable verbose logging to debug test execution
 const bool verbose = false;
 
@@ -35,7 +37,7 @@ void main() {
       });
 
       // Wait for completion
-      final finalValue = await nameStream.future;
+      final finalValue = await nameStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       // Verify accumulated chunks form the complete value
@@ -67,7 +69,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await textStream.future;
+      final finalValue = await textStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(chunks.join(''), equals('Hello\nWorld'));
@@ -95,7 +97,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await textStream.future;
+      final finalValue = await textStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(chunks.join(''), equals('Hello\tWorld'));
@@ -123,7 +125,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await quoteStream.future;
+      final finalValue = await quoteStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(chunks.join(''), equals('She said "Hi"'));
@@ -151,7 +153,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await pathStream.future;
+      final finalValue = await pathStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(chunks.join(''), equals('C:\\Users\\file'));
@@ -179,7 +181,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await emptyStream.future;
+      final finalValue = await emptyStream.future.withTestTimeout();
       if (verbose) print('[FINAL] "$finalValue"');
 
       expect(chunks.join(''), equals(''));
@@ -207,7 +209,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await emojiStream.future;
+      final finalValue = await emojiStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(chunks.join(''), equals('👋🌍'));
@@ -235,7 +237,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await nameStream.future;
+      final finalValue = await nameStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(chunks.join(''), equals('Bob'));
@@ -263,7 +265,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await nameStream.future;
+      final finalValue = await nameStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(chunks.join(''), equals('Charlie'));
@@ -291,7 +293,7 @@ void main() {
         chunks.add(chunk);
       });
 
-      final finalValue = await msgStream.future;
+      final finalValue = await msgStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(chunks.join(''), equals('Line1\nLine2\tTabbed\r\nLine3'));

@@ -3,6 +3,8 @@ import 'package:test/test.dart';
 import 'package:json_stream_parser/json_stream_parser.dart';
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
+import 'list_property_test.dart';
+
 /// Enable verbose logging to debug test execution
 const bool verbose = false;
 
@@ -28,7 +30,7 @@ void main() {
       if (verbose) print('[EMITTED] $emittedValue');
 
       // Verify future resolves to the same value
-      final finalValue = await ageStream.future;
+      final finalValue = await ageStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(30));
@@ -53,7 +55,7 @@ void main() {
       final emittedValue = await tempStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await tempStream.future;
+      final finalValue = await tempStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(-5));
@@ -78,7 +80,7 @@ void main() {
       final emittedValue = await priceStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await priceStream.future;
+      final finalValue = await priceStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(19.99));
@@ -103,7 +105,7 @@ void main() {
       final emittedValue = await largeStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await largeStream.future;
+      final finalValue = await largeStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(1.23e10));
@@ -128,7 +130,7 @@ void main() {
       final emittedValue = await smallStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await smallStream.future;
+      final finalValue = await smallStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(-2.5e-3));
@@ -153,7 +155,7 @@ void main() {
       final emittedValue = await countStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await countStream.future;
+      final finalValue = await countStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(0));
@@ -178,7 +180,7 @@ void main() {
       final emittedValue = await bigStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await bigStream.future;
+      final finalValue = await bigStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(9223372036854775807));
@@ -203,7 +205,7 @@ void main() {
       final emittedValue = await ageStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await ageStream.future;
+      final finalValue = await ageStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(25));
@@ -228,7 +230,7 @@ void main() {
       final emittedValue = await countStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await countStream.future;
+      final finalValue = await countStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(42));
@@ -253,7 +255,7 @@ void main() {
       final emittedValue = await valueStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await valueStream.future;
+      final finalValue = await valueStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(3.14));
@@ -278,7 +280,7 @@ void main() {
       final emittedValue = await valueStream.stream.first;
       if (verbose) print('[EMITTED] $emittedValue');
 
-      final finalValue = await valueStream.future;
+      final finalValue = await valueStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalValue');
 
       expect(emittedValue, equals(123.456));

@@ -41,12 +41,18 @@ class ListPropertyDelegate extends PropertyDelegate {
   String get _currentElementPath => '$propertyPath[$_index]';
 
   void onChildComplete() {
-    // Child has completed - this is just a signal
-    // Don't change state or index here - wait for comma or bracket
+    // State management now happens inline in addCharacter
+    // This callback is just for notification purposes
+  }
+
+  @override
+  void onChunkEnd() {
+    _activeChildDelegate?.onChunkEnd();
   }
 
   @override
   void addCharacter(String character) {
+    print("\nSTATE: ${_state.name}\nCHARACTER: |$character|\n");
     // Handle opening bracket
     if (_isFirstCharacter && character == '[') {
       _isFirstCharacter = false;
@@ -63,21 +69,18 @@ class ListPropertyDelegate extends PropertyDelegate {
       return;
     }
 
-    // Handle reading value state
     if (_state == ListParserState.readingValue) {
-      // Check if child is done BEFORE feeding more characters
-      if (_activeChildDelegate?.isDone ?? false) {
+      _activeChildDelegate?.addCharacter(character);
+
+      // If child completed, we need to reprocess this character
+      // in case it's a delimiter (like comma for numbers)
+      if (_activeChildDelegate?.isDone == true) {
+        _activeChildDelegate = null;
+        _index++;
         _state = ListParserState.waitingForCommaOrEnd;
-        // Don't return - fall through to process the character in the new state
+        // Don't return - reprocess the character in the new state
       } else {
-        _activeChildDelegate?.addCharacter(character);
-        // Check again AFTER feeding - child might complete on this character
-        if (_activeChildDelegate?.isDone ?? false) {
-          _state = ListParserState.waitingForCommaOrEnd;
-          // Don't return - check for comma/bracket in same iteration
-        } else {
-          return;
-        }
+        return;
       }
     }
 
@@ -105,12 +108,14 @@ class ListPropertyDelegate extends PropertyDelegate {
           streamType,
         );
 
+        print('GOT: $streamType for $character');
+
         // Invoke onElement callbacks if anyone is listening (i.e., if the list controller exists)
         // Note: The list controller only exists if someone called getListProperty() on this path
         try {
           final listController =
               parserController.getPropertyStreamController(propertyPath)
-                  as ListPropertyStreamController;
+                  as ListPropertyStreamController<Object?>;
 
           for (final callback in listController.onElementCallbacks) {
             callback(elementStream, _index);
@@ -134,25 +139,18 @@ class ListPropertyDelegate extends PropertyDelegate {
         return;
       }
 
-      // Handle closing bracket for empty array
       if (character == ']') {
         _completeList();
         return;
       }
     }
 
-    // Handle waiting for comma or end state
     if (_state == ListParserState.waitingForCommaOrEnd) {
       if (character == ',') {
-        // Finalize the completed child
-        _activeChildDelegate = null;
-        _index += 1;
         _state = ListParserState.waitingForValue;
+        print('GOT COMMA');
         return;
       } else if (character == ']') {
-        // Finalize the last child before completing
-        _activeChildDelegate = null;
-        _index += 1;
         _completeList();
         return;
       }
@@ -162,8 +160,7 @@ class ListPropertyDelegate extends PropertyDelegate {
   void _completeList() async {
     isDone = true;
 
-    // Collect all element values
-    final List<dynamic> elements = [];
+    final List<Object?> elements = [];
     for (int i = 0; i < _index; i++) {
       final elementPath = '$propertyPath[$i]';
       try {

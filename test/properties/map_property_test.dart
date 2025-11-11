@@ -3,6 +3,8 @@ import 'package:test/test.dart';
 import 'package:json_stream_parser/json_stream_parser.dart';
 import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
 
+import 'list_property_test.dart';
+
 /// Enable verbose logging to debug test execution
 const bool verbose = false;
 
@@ -24,7 +26,7 @@ void main() {
       // Get the root map
       final mapStream = parser.getMapProperty(".");
 
-      final finalMap = await mapStream.future;
+      final finalMap = await mapStream.future.withTestTimeout();
       if (verbose) print('[FINAL] $finalMap');
 
       expect(finalMap, isA<Map>());
@@ -48,8 +50,8 @@ void main() {
       final nameStream = parser.getStringProperty("name");
       final ageStream = parser.getNumberProperty("age");
 
-      final name = await nameStream.future;
-      final age = await ageStream.future;
+      final name = await nameStream.future.withTestTimeout();
+      final age = await ageStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] name: $name');
@@ -75,7 +77,7 @@ void main() {
 
       // Get nested map
       final userMapStream = parser.getMapProperty("user");
-      final userMap = await userMapStream.future;
+      final userMap = await userMapStream.future.withTestTimeout();
 
       if (verbose) print('[FINAL] user: $userMap');
 
@@ -101,8 +103,8 @@ void main() {
       final cityStream = parser.getStringProperty("user.address.city");
       final zipStream = parser.getStringProperty("user.address.zip");
 
-      final city = await cityStream.future;
-      final zip = await zipStream.future;
+      final city = await cityStream.future.withTestTimeout();
+      final zip = await zipStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] city: $city');
@@ -127,7 +129,7 @@ void main() {
       final parser = JsonStreamParser(stream);
 
       final valueStream = parser.getStringProperty("a.b.c.d.value");
-      final value = await valueStream.future;
+      final value = await valueStream.future.withTestTimeout();
 
       if (verbose) print('[FINAL] value: $value');
 
@@ -148,7 +150,7 @@ void main() {
       final parser = JsonStreamParser(stream);
 
       final emptyMapStream = parser.getMapProperty("empty");
-      final emptyMap = await emptyMapStream.future;
+      final emptyMap = await emptyMapStream.future.withTestTimeout();
 
       if (verbose) print('[FINAL] empty: $emptyMap');
 
@@ -174,10 +176,10 @@ void main() {
       final boolStream = parser.getBooleanProperty("bool");
       final nullStream = parser.getNullProperty("null");
 
-      final stringVal = await stringStream.future;
-      final numberVal = await numberStream.future;
-      final boolVal = await boolStream.future;
-      final nullVal = await nullStream.future;
+      final stringVal = await stringStream.future.withTestTimeout();
+      final numberVal = await numberStream.future.withTestTimeout();
+      final boolVal = await boolStream.future.withTestTimeout();
+      final nullVal = await nullStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] string: $stringVal');
@@ -207,7 +209,7 @@ void main() {
 
       // Get user map first
       final userMapStream = parser.getMapProperty("user");
-      final userMap = await userMapStream.future;
+      final userMap = await userMapStream.future.withTestTimeout();
 
       if (verbose) print('[GOT MAP] user: $userMap');
 
@@ -215,8 +217,8 @@ void main() {
       final nameStream = userMapStream.getStringProperty("name");
       final emailStream = userMapStream.getStringProperty("email");
 
-      final name = await nameStream.future;
-      final email = await emailStream.future;
+      final name = await nameStream.future.withTestTimeout();
+      final email = await emailStream.future.withTestTimeout();
 
       if (verbose) {
         print('[CHAINED] name: $name');
@@ -244,9 +246,9 @@ void main() {
       final ageStream = parser.getNumberProperty("person.info.age");
       final activeStream = parser.getBooleanProperty("person.active");
 
-      final name = await nameStream.future;
-      final age = await ageStream.future;
-      final active = await activeStream.future;
+      final name = await nameStream.future.withTestTimeout();
+      final age = await ageStream.future.withTestTimeout();
+      final active = await activeStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] name: $name');
@@ -276,9 +278,9 @@ void main() {
       final bStream = parser.getNumberProperty("map2.b");
       final cStream = parser.getNumberProperty("map3.c");
 
-      final a = await aStream.future;
-      final b = await bStream.future;
-      final c = await cStream.future;
+      final a = await aStream.future.withTestTimeout();
+      final b = await bStream.future.withTestTimeout();
+      final c = await cStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] a: $a');
@@ -307,8 +309,8 @@ void main() {
       final nameStream = parser.getStringProperty("name");
       final ageStream = parser.getNumberProperty("age");
 
-      final name = await nameStream.future;
-      final age = await ageStream.future;
+      final name = await nameStream.future.withTestTimeout();
+      final age = await ageStream.future.withTestTimeout();
 
       if (verbose) {
         print('[FINAL] name: $name');

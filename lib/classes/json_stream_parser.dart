@@ -121,9 +121,10 @@ class JsonStreamParser {
     return controller.propertyStream;
   }
 
-  ListPropertyStream getListProperty(
+  ListPropertyStream<E> getListProperty<E extends Object?>(
     String propertyPath, {
-    void Function(PropertyStream, int)? onElement,
+    void Function(PropertyStream propertyStream, int index)?
+    onElement, // make it so that the type of property stream is dependent on the type of the list
   }) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! ListPropertyStreamController) {
@@ -134,12 +135,12 @@ class JsonStreamParser {
     final controller =
         _propertyControllers.putIfAbsent(
               propertyPath,
-              () => ListPropertyStreamController(
+              () => ListPropertyStreamController<E>(
                 parserController: _controller,
                 propertyPath: propertyPath,
               ),
             )
-            as ListPropertyStreamController;
+            as ListPropertyStreamController<E>;
     if (onElement != null) {
       controller.addOnElementCallback(onElement);
     }
@@ -176,7 +177,7 @@ class JsonStreamParser {
                   propertyPath: propertyPath,
                 );
               } else if (T == List<Object?>) {
-                return ListPropertyStreamController(
+                return ListPropertyStreamController<Object?>(
                   parserController: _controller,
                   propertyPath: propertyPath,
                 );

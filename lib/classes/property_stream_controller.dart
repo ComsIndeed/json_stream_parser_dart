@@ -80,10 +80,10 @@ class MapPropertyStreamController
   }
 }
 
-class ListPropertyStreamController
-    extends PropertyStreamController<List<Object?>> {
+class ListPropertyStreamController<T extends Object?>
+    extends PropertyStreamController<List<T>> {
   @override
-  late final ListPropertyStream propertyStream;
+  late final ListPropertyStream<T> propertyStream;
   List<void Function(PropertyStream, int)> onElementCallbacks = [];
 
   void addOnElementCallback(
@@ -96,11 +96,22 @@ class ListPropertyStreamController
     required super.parserController,
     required super.propertyPath,
   }) {
-    propertyStream = ListPropertyStream(
+    propertyStream = ListPropertyStream<T>(
       future: completer.future,
       parserController: parserController,
       propertyPath: propertyPath,
     );
+  }
+
+  @override
+  void complete(covariant List<Object?> value) {
+    if (!_isClosed) {
+      // Cast the list to List<T>
+      // This handles the case where we receive a List<Object?> that needs to be List<T>
+      final typedList = List<T>.from(value);
+      completer.complete(typedList);
+      onClose();
+    }
   }
 }
 

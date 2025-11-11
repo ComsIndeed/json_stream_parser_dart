@@ -51,5 +51,7 @@ class NumberPropertyDelegate extends PropertyDelegate {
       chunk: number,
     );
     parserController.getPropertyStreamController(propertyPath).complete(number);
+    onComplete?.call();
+    print('Completed number property at $propertyPath: $number');
   }
 }

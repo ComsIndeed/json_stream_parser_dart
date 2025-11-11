@@ -64,7 +64,7 @@ class BooleanPropertyStream extends PropertyStream<bool> {
   Stream<bool> get stream => _stream;
 }
 
-class ListPropertyStream extends PropertyStream<List<Object?>> {
+class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>> {
   final String _propertyPath;
 
   ListPropertyStream({
@@ -79,7 +79,7 @@ class ListPropertyStream extends PropertyStream<List<Object?>> {
     // Add callback to the controller's list, not our local copy
     final controller =
         _parserController.getPropertyStreamController(_propertyPath)
-            as ListPropertyStreamController;
+            as ListPropertyStreamController<T>;
     controller.addOnElementCallback(callback);
   }
 
@@ -123,12 +123,12 @@ class ListPropertyStream extends PropertyStream<List<Object?>> {
         as MapPropertyStream;
   }
 
-  ListPropertyStream getListProperty(String key) {
+  ListPropertyStream<E> getListProperty<E extends Object?>(String key) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
             .getPropertyStreamController(fullPath)
             .propertyStream
-        as ListPropertyStream;
+        as ListPropertyStream<E>;
   }
 }
 
@@ -181,11 +181,11 @@ class MapPropertyStream extends PropertyStream<Map<String, Object?>> {
         as MapPropertyStream;
   }
 
-  ListPropertyStream getListProperty(String key) {
+  ListPropertyStream<E> getListProperty<E extends Object?>(String key) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
     return _parserController
             .getPropertyStreamController(fullPath)
             .propertyStream
-        as ListPropertyStream;
+        as ListPropertyStream<E>;
   }
 }

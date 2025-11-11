@@ -36,7 +36,28 @@
     method:
     > `type 'MapPropertyStreamController' is not a subtype of type 'PropertyStreamController<String>' in type cast`
   - Completely forgot about why I had this issue above this line, moved onto other stuff for now
-  - Added onElement callback on public API for ListPropertyStream
+  - Added onElement callback on public API for ListPropertyStream'
+  - ISSUE: 
+    - We need a way to check values if they are done
+    - But, the ending quotes will signal to wait for comma while the comma as delimiters for numbers will signal to wait for value (or the ending bracket signalling completion)
+    - This makes us have to handle the same thing twice
+    - The two issues:
+      ```
+
+        |"Testing",|
+                 ^ this is the delimiter, await for comma
+
+        |09123123,|
+                 ^ this is the delimiter, await for value
+
+        solution: let the delegates determine if they're done and then let the parent delegate determine if its time to shine? 
+
+        whats the solution here
+
+      ```
+    - IDEAS:
+      - Do the thing Claude did where we let them pass? How tho
+      - Constantly check for completion. If its already completed, check the current character if it is a comma or end to determine next 
 
 ## Architecture
 
