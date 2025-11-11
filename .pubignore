@@ -1,0 +1,18 @@
+# Files to exclude from the published package on pub.dev
+# These files stay in the git repo but won't be included in the package
+
+# Development and planning documents
+CHECKLIST.md
+journal.md
+PROJECT_STATUS.md
+
+# AI assistance documentation
+ai-summaries/
+
+# Trash and temporary files
+_trash/
+
+# Git and IDE files
+.git/
+.gitignore
+.vscode/
