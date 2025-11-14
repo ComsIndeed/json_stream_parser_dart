@@ -1,6 +1,6 @@
 # JSON Stream Parser
 
-[![Tests Passing](https://img.shields.io/badge/tests-75%20passing-brightgreen)]()
+[![Tests Passing](https://img.shields.io/badge/tests-83%20passing-brightgreen)]()
 [![Dart](https://img.shields.io/badge/dart-%3E%3D3.0.0-blue)]()
 
 A production-ready streaming JSON parser for Dart, optimized for LLM (Large Language Model) streaming responses.
@@ -12,6 +12,10 @@ This package implements a **streaming JSON parser** specifically designed for
 generates JSON token-by-token, this parser allows you to reactively access
 properties **as they're being formed**, without waiting for the entire response
 to complete.
+
+**✨ Handles multiline JSON perfectly** - Works seamlessly with triple-quoted
+strings (`'''`) and JSON with actual newline characters, making it ideal for
+testing and development.
 
 ### Perfect For:
 
@@ -486,7 +490,8 @@ You're currently at the **List API** phase.
 - [x] Test `onElement` functionality
 - [x] Test `ListPropertyStream` typed methods (`.getStringProperty("[0]")`)
 - [x] **Error handling test suite** (21 comprehensive tests)
-- **Total: 75 tests passing** ✅
+- [x] **Multiline JSON test suite** (8 tests for newlines, whitespace, CRLF)
+- **Total: 83 tests passing** ✅
 
 ### Documentation & Examples
 
@@ -558,6 +563,7 @@ All core features implemented and tested:
 ✅ Array index access (`items[0]`, `items[1]`)  
 ✅ Dynamic element callbacks (`onElement`)  
 ✅ Error handling and edge cases  
-✅ 75 comprehensive tests passing  
+✅ Multiline JSON with leading whitespace  
+✅ 83 comprehensive tests passing  
 
 Ready for real-world LLM streaming applications!

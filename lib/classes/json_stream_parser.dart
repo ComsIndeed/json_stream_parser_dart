@@ -32,15 +32,13 @@ class JsonStreamParser {
         'Property at path $propertyPath is not a StringPropertyStream',
       );
     }
-    final controller =
-        _propertyControllers.putIfAbsent(
-              propertyPath,
-              () => StringPropertyStreamController(
-                parserController: _controller,
-                propertyPath: propertyPath,
-              ),
-            )
-            as StringPropertyStreamController;
+    final controller = _propertyControllers.putIfAbsent(
+      propertyPath,
+      () => StringPropertyStreamController(
+        parserController: _controller,
+        propertyPath: propertyPath,
+      ),
+    ) as StringPropertyStreamController;
     return controller.propertyStream;
   }
 
@@ -51,15 +49,13 @@ class JsonStreamParser {
         'Property at path $propertyPath is not a NumberPropertyStream',
       );
     }
-    final controller =
-        _propertyControllers.putIfAbsent(
-              propertyPath,
-              () => NumberPropertyStreamController(
-                parserController: _controller,
-                propertyPath: propertyPath,
-              ),
-            )
-            as NumberPropertyStreamController;
+    final controller = _propertyControllers.putIfAbsent(
+      propertyPath,
+      () => NumberPropertyStreamController(
+        parserController: _controller,
+        propertyPath: propertyPath,
+      ),
+    ) as NumberPropertyStreamController;
     return controller.propertyStream;
   }
 
@@ -71,15 +67,13 @@ class JsonStreamParser {
         'Property at path $propertyPath is not a BooleanPropertyStream',
       );
     }
-    final controller =
-        _propertyControllers.putIfAbsent(
-              propertyPath,
-              () => BooleanPropertyStreamController(
-                parserController: _controller,
-                propertyPath: propertyPath,
-              ),
-            )
-            as BooleanPropertyStreamController;
+    final controller = _propertyControllers.putIfAbsent(
+      propertyPath,
+      () => BooleanPropertyStreamController(
+        parserController: _controller,
+        propertyPath: propertyPath,
+      ),
+    ) as BooleanPropertyStreamController;
     return controller.propertyStream;
   }
 
@@ -90,15 +84,13 @@ class JsonStreamParser {
         'Property at path $propertyPath is not a NullPropertyStream',
       );
     }
-    final controller =
-        _propertyControllers.putIfAbsent(
-              propertyPath,
-              () => NullPropertyStreamController(
-                parserController: _controller,
-                propertyPath: propertyPath,
-              ),
-            )
-            as NullPropertyStreamController;
+    final controller = _propertyControllers.putIfAbsent(
+      propertyPath,
+      () => NullPropertyStreamController(
+        parserController: _controller,
+        propertyPath: propertyPath,
+      ),
+    ) as NullPropertyStreamController;
     return controller.propertyStream;
   }
 
@@ -109,22 +101,20 @@ class JsonStreamParser {
         'Property at path $propertyPath is not a MapPropertyStream',
       );
     }
-    final controller =
-        _propertyControllers.putIfAbsent(
-              propertyPath,
-              () => MapPropertyStreamController(
-                parserController: _controller,
-                propertyPath: propertyPath,
-              ),
-            )
-            as MapPropertyStreamController;
+    final controller = _propertyControllers.putIfAbsent(
+      propertyPath,
+      () => MapPropertyStreamController(
+        parserController: _controller,
+        propertyPath: propertyPath,
+      ),
+    ) as MapPropertyStreamController;
     return controller.propertyStream;
   }
 
   ListPropertyStream<E> getListProperty<E extends Object?>(
     String propertyPath, {
     void Function(PropertyStream propertyStream, int index)?
-    onElement, // make it so that the type of property stream is dependent on the type of the list
+        onElement, // make it so that the type of property stream is dependent on the type of the list
   }) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! ListPropertyStreamController) {
@@ -132,15 +122,13 @@ class JsonStreamParser {
         'Property at path $propertyPath is not a ListPropertyStream',
       );
     }
-    final controller =
-        _propertyControllers.putIfAbsent(
-              propertyPath,
-              () => ListPropertyStreamController<E>(
-                parserController: _controller,
-                propertyPath: propertyPath,
-              ),
-            )
-            as ListPropertyStreamController<E>;
+    final controller = _propertyControllers.putIfAbsent(
+      propertyPath,
+      () => ListPropertyStreamController<E>(
+        parserController: _controller,
+        propertyPath: propertyPath,
+      ),
+    ) as ListPropertyStreamController<E>;
     if (onElement != null) {
       controller.addOnElementCallback(onElement);
     }
@@ -149,47 +137,44 @@ class JsonStreamParser {
 
   // * Controller methods
   void _addPropertyChunk<T>({required String propertyPath, required T chunk}) {
-    final controller =
-        _propertyControllers.putIfAbsent(propertyPath, () {
-              if (T == String) {
-                return StringPropertyStreamController(
-                  parserController: _controller,
-                  propertyPath: propertyPath,
-                );
-              } else if (T == num) {
-                return NumberPropertyStreamController(
-                  parserController: _controller,
-                  propertyPath: propertyPath,
-                );
-              } else if (T == bool) {
-                return BooleanPropertyStreamController(
-                  parserController: _controller,
-                  propertyPath: propertyPath,
-                );
-              } else if (T == Null) {
-                return NullPropertyStreamController(
-                  parserController: _controller,
-                  propertyPath: propertyPath,
-                );
-              } else if (T == Map<String, Object?>) {
-                return MapPropertyStreamController(
-                  parserController: _controller,
-                  propertyPath: propertyPath,
-                );
-              } else if (T == List<Object?>) {
-                return ListPropertyStreamController<Object?>(
-                  parserController: _controller,
-                  propertyPath: propertyPath,
-                );
-              } else {
-                throw UnimplementedError(
-                  'No PropertyStreamController for type $T',
-                );
-              }
-            })
-            as PropertyStreamController<
-              T
-            >; // TODO: Fix casting. Maybe remove generics?
+    final controller = _propertyControllers.putIfAbsent(propertyPath, () {
+      if (T == String) {
+        return StringPropertyStreamController(
+          parserController: _controller,
+          propertyPath: propertyPath,
+        );
+      } else if (T == num) {
+        return NumberPropertyStreamController(
+          parserController: _controller,
+          propertyPath: propertyPath,
+        );
+      } else if (T == bool) {
+        return BooleanPropertyStreamController(
+          parserController: _controller,
+          propertyPath: propertyPath,
+        );
+      } else if (T == Null) {
+        return NullPropertyStreamController(
+          parserController: _controller,
+          propertyPath: propertyPath,
+        );
+      } else if (T == Map<String, Object?>) {
+        return MapPropertyStreamController(
+          parserController: _controller,
+          propertyPath: propertyPath,
+        );
+      } else if (T == List<Object?>) {
+        return ListPropertyStreamController<Object?>(
+          parserController: _controller,
+          propertyPath: propertyPath,
+        );
+      } else {
+        throw UnimplementedError(
+          'No PropertyStreamController for type $T',
+        );
+      }
+    }) as PropertyStreamController<
+        T>; // TODO: Fix casting. Maybe remove generics?
 
     // everything but list and map controllers will emit chunks in its stream
     if (controller is MapPropertyStreamController ||
@@ -270,6 +255,14 @@ class JsonStreamParser {
         continue;
       }
 
+      // Skip leading whitespace before the root element
+      if (character == ' ' ||
+          character == '\t' ||
+          character == '\n' ||
+          character == '\r') {
+        continue;
+      }
+
       if (character == '{') {
         _rootDelegate = MapPropertyDelegate(
           propertyPath: '',
@@ -301,13 +294,13 @@ class JsonStreamParserController {
   });
 
   final void Function<T>({required String propertyPath, required T chunk})
-  addPropertyChunk;
+      addPropertyChunk;
 
   PropertyStreamController Function(String propertyPath)
-  getPropertyStreamController;
+      getPropertyStreamController;
 
   /// Gets a PropertyStream for the given path, creating the controller if needed.
   /// The type parameter indicates what kind of stream to create.
   final PropertyStream Function(String propertyPath, Type streamType)
-  getPropertyStream;
+      getPropertyStream;
 }

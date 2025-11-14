@@ -1,3 +1,11 @@
+## 1.0.1
+
+- **Bug fix**: Parser now correctly handles leading whitespace before root JSON element
+  - Fixed issue where triple-quoted strings with leading newlines would fail to parse
+  - Parser now skips whitespace characters (`\n`, `\r`, `\t`, space) before `{` or `[`
+  - Added 8 comprehensive tests for multiline JSON scenarios
+- **Total: 83 tests passing** ✅
+
 ## 1.0.0
 
 - **Initial production release** 🚀

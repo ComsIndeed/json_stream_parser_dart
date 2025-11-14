@@ -12,8 +12,8 @@ abstract class PropertyStream<T> {
   PropertyStream({
     required Future<T> future,
     required JsonStreamParserController parserController,
-  }) : _future = future,
-       _parserController = parserController;
+  })  : _future = future,
+        _parserController = parserController;
 }
 
 ///

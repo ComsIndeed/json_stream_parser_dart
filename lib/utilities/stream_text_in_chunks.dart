@@ -13,9 +13,8 @@ Stream<String> streamTextInChunks({
     int start = i * chunkSize;
     // The end is either the next chunk's start or the total length,
     // whichever comes first (to handle the final, possibly smaller chunk).
-    int end = (start + chunkSize < totalLength)
-        ? start + chunkSize
-        : totalLength;
+    int end =
+        (start + chunkSize < totalLength) ? start + chunkSize : totalLength;
 
     // Get the substring for the current chunk.
     String chunk = text.substring(start, end);
