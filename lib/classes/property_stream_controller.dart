@@ -44,6 +44,7 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
   final streamController = StreamController<String>();
 
   @override
+
   /// [value] will be ignored. The stream will emit the accumulated chunks instead.
   void complete(String value) {
     if (!_isClosed) {
@@ -135,6 +136,7 @@ class NumberPropertyStreamController extends PropertyStreamController<num> {
   }
 
   @override
+
   /// [value] will be ignored. The stream will emit the accumulated chunks instead.
   void complete(num value) {
     if (!_isClosed) {
@@ -162,6 +164,7 @@ class BooleanPropertyStreamController extends PropertyStreamController<bool> {
   }
 
   @override
+
   /// [value] will be ignored. The stream will emit the accumulated chunks instead.
   void complete(bool value) {
     if (!_isClosed) {
@@ -190,6 +193,7 @@ class NullPropertyStreamController extends PropertyStreamController<Null> {
   }
 
   @override
+
   /// [value] will be ignored. The stream will emit the accumulated chunks instead.
   void complete(Null value) {
     if (!_isClosed) {

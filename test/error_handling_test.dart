@@ -24,10 +24,8 @@ void main() {
       expect(name, equals('Alice'));
 
       // The root map should also complete
-      final rootMap = await parser
-          .getMapProperty("")
-          .future
-          .timeout(Duration(seconds: 1));
+      final rootMap =
+          await parser.getMapProperty("").future.timeout(Duration(seconds: 1));
       expect(rootMap, isA<Map>());
     });
 

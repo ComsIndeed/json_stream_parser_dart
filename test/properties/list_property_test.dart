@@ -14,12 +14,12 @@ const testTimeout = Duration(seconds: 5);
 /// Helper to add timeout to futures
 extension FutureTimeout<T> on Future<T> {
   Future<T> withTestTimeout() => timeout(
-    testTimeout,
-    onTimeout: () => throw TimeoutException(
-      'Test timed out after ${testTimeout.inSeconds} seconds',
-      testTimeout,
-    ),
-  );
+        testTimeout,
+        onTimeout: () => throw TimeoutException(
+          'Test timed out after ${testTimeout.inSeconds} seconds',
+          testTimeout,
+        ),
+      );
 }
 
 void main() {
