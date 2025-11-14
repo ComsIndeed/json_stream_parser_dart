@@ -1,3 +1,4 @@
 [ ] Handle random unexpected characters present 
 [ ] Check if parser closes when JSON is done    
 [ ] Allow for disposing the stream ?
+[ ] Allow for setting callbacks or traps from the property stream object itself
