@@ -1,0 +1,3 @@
+[ ] Handle random unexpected characters present 
+[ ] Check if parser closes when JSON is done    
+[ ] Allow for disposing the stream ?
