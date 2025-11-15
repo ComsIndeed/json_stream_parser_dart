@@ -1,3 +1,6 @@
+## 0.1.4
+- Updated demo to use Github raw content URL
+
 ## 0.1.3
 - Fixed demo not showing in Pub.dev
 
