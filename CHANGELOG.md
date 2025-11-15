@@ -1,3 +1,6 @@
+## [0.1.1] - 2024-06-20
+- Minor documentation updates
+
 ## 0.1.0
 
 - **Initial release** 🚀
