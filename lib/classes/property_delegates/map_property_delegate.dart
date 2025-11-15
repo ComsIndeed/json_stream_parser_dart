@@ -21,9 +21,10 @@ class MapPropertyDelegate extends PropertyDelegate {
 
   void onChildComplete() {
     _activeChildDelegate = null;
-    _state = MapParserState
-        .waitingForKey; // The delegate received the comma or end signal, so...
-    _keyBuffer = "";
+    // Transition state to allow parsing to continue
+    if (_state == MapParserState.readingValue) {
+      _state = MapParserState.waitingForCommaOrEnd;
+    }
   }
 
   @override
@@ -37,7 +38,7 @@ class MapPropertyDelegate extends PropertyDelegate {
 
   @override
   void addCharacter(String character) {
-    // Debug logging disabled
+    // Debug logging disabled to reduce noise
     // print(
     //   'MAP[$propertyPath] State: $_state | Char: |$character| | KeyBuffer: |$_keyBuffer| | ChildDone: ${_activeChildDelegate?.isDone}',
     // );
@@ -76,12 +77,20 @@ class MapPropertyDelegate extends PropertyDelegate {
 
     if (_state == MapParserState.waitingForValue) {
       if (character == " " || character == ":") return;
-      _activeChildDelegate = createDelegate(
+      // Create child delegate with a closure that checks if it's still active
+      PropertyDelegate? childDelegate;
+      childDelegate = createDelegate(
         character,
         propertyPath: newPath(_keyBuffer),
         jsonStreamParserController: parserController,
-        onComplete: onChildComplete,
+        onComplete: () {
+          // Only notify parent if this child is still the active one
+          if (_activeChildDelegate == childDelegate) {
+            onChildComplete();
+          }
+        },
       );
+      _activeChildDelegate = childDelegate;
       _activeChildDelegate!.addCharacter(character);
       _state = MapParserState.readingValue;
       return;
