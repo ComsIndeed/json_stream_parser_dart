@@ -16,3 +16,5 @@ _trash/
 .git/
 .gitignore
 .vscode/
+
+assets/*
