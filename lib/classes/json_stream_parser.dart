@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:json_stream_parser/classes/property_delegates/list_property_delegate.dart';
-import 'package:json_stream_parser/classes/property_delegates/map_property_delegate.dart';
-import 'package:json_stream_parser/classes/property_delegates/property_delegate.dart';
-import 'package:json_stream_parser/classes/property_stream.dart';
-import 'package:json_stream_parser/classes/property_stream_controller.dart';
+import 'package:streaming_json_parser/classes/property_delegates/list_property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_delegates/map_property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_delegates/property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_stream.dart';
+import 'package:streaming_json_parser/classes/property_stream_controller.dart';
 
 /// A streaming JSON parser optimized for LLM responses.
 ///

@@ -1,11 +1,11 @@
-import 'package:json_stream_parser/classes/json_stream_parser.dart';
-import 'package:json_stream_parser/classes/property_delegates/boolean_property_delegate.dart';
-import 'package:json_stream_parser/classes/property_delegates/list_property_delegate.dart';
-import 'package:json_stream_parser/classes/property_delegates/map_property_delegate.dart';
-import 'package:json_stream_parser/classes/property_delegates/null_property_delegate.dart';
-import 'package:json_stream_parser/classes/property_delegates/number_property_delegate.dart';
-import 'package:json_stream_parser/classes/property_delegates/property_delegate.dart';
-import 'package:json_stream_parser/classes/property_delegates/string_property_delegate.dart';
+import 'package:streaming_json_parser/classes/json_stream_parser.dart';
+import 'package:streaming_json_parser/classes/property_delegates/boolean_property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_delegates/list_property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_delegates/map_property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_delegates/null_property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_delegates/number_property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_delegates/property_delegate.dart';
+import 'package:streaming_json_parser/classes/property_delegates/string_property_delegate.dart';
 
 mixin Delegator {
   PropertyDelegate createDelegate(

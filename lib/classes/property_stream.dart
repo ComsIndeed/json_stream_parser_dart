@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:json_stream_parser/classes/json_stream_parser.dart';
-import 'package:json_stream_parser/classes/property_stream_controller.dart';
+import 'package:streaming_json_parser/classes/json_stream_parser.dart';
+import 'package:streaming_json_parser/classes/property_stream_controller.dart';
 
 /// Base class for all property streams.
 ///
