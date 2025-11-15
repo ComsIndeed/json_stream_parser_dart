@@ -1,5 +1,5 @@
-import 'package:streaming_json_parser/classes/property_delegates/property_delegate.dart';
-import 'package:streaming_json_parser/classes/property_stream_controller.dart';
+import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
+import 'package:llm_json_stream/classes/property_stream_controller.dart';
 
 class ListPropertyDelegate extends PropertyDelegate {
   ListPropertyDelegate({

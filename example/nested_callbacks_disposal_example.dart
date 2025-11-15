@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:streaming_json_parser/json_stream_parser.dart';
+import 'package:llm_json_stream/json_stream_parser.dart';
 
 /// Example demonstrating:
 /// 1. Setting onElement callbacks on nested lists via getListProperty()
