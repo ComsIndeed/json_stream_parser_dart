@@ -6,15 +6,60 @@ import 'package:json_stream_parser/classes/property_delegates/property_delegate.
 import 'package:json_stream_parser/classes/property_stream.dart';
 import 'package:json_stream_parser/classes/property_stream_controller.dart';
 
+/// A streaming JSON parser optimized for LLM responses.
 ///
-/// BASE PARSER HANDLING THE DELEGATES AND PROPERTY STREAMS
-/// [ ] RESPONSIBLE FOR CREATING THE ROOT DELEGATE AND PROVIDING METHODS TO DESCENDANT DELEGATES
-/// [ ] RESPONSIBLE FOR EXPOSING METHODS TO GET PROPERTY STREAMS
-/// [ ] RESPONSIBLE FOR FEEDING CHUNKS TO THE ROOT DELEGATE
-/// [ ] RESPONSIBLE FOR SIGNALLING THE END OF A CHUNK TO THE ROOT DELEGATE
+/// This parser processes JSON data character-by-character as it streams in,
+/// allowing you to react to properties before the entire JSON is received.
+/// It's specifically designed for handling Large Language Model (LLM) streaming
+/// responses that output structured JSON data.
 ///
-
+/// ## Key Features
+///
+/// - **Reactive property access**: Subscribe to JSON properties as they complete
+/// - **Streaming string values**: Receive string content chunk-by-chunk as it arrives
+/// - **Path-based subscriptions**: Access nested properties with dot notation or chainable API
+/// - **Type safety**: Typed property streams for all JSON types
+/// - **Dynamic list handling**: React to array elements as soon as they start arriving
+///
+/// ## Basic Usage
+///
+/// ```dart
+/// final parser = JsonStreamParser(streamFromLLM);
+///
+/// // Subscribe to properties
+/// parser.getStringProperty('title').stream.listen((chunk) {
+///   print('Title chunk: $chunk');
+/// });
+///
+/// // Wait for complete values
+/// final age = await parser.getNumberProperty('user.age').future;
+/// print('Age: $age');
+/// ```
+///
+/// ## Path Syntax
+///
+/// Access nested properties using dot notation:
+/// - `'title'` - Root property
+/// - `'user.name'` - Nested property
+/// - `'items[0].name'` - Array element property
+/// - `'data.users[2].profile.age'` - Deep nesting
+///
+/// ## Disposal
+///
+/// Call [dispose] when done to clean up resources:
+/// ```dart
+/// await parser.dispose();
+/// ```
 class JsonStreamParser {
+  /// Creates a new JSON stream parser that processes the given [stream].
+  ///
+  /// The parser immediately begins consuming the stream and parsing JSON
+  /// character-by-character.
+  ///
+  /// Example:
+  /// ```dart
+  /// final parser = JsonStreamParser(myLLMResponseStream);
+  /// ```
   JsonStreamParser(Stream<String> stream) : _stream = stream {
     _streamSubscription = _stream.listen(_parseChunk);
     _controller = JsonStreamParserController(
@@ -24,7 +69,29 @@ class JsonStreamParser {
     );
   }
 
-  // * Exposeds
+  /// Gets a stream for a string property at the specified [propertyPath].
+  ///
+  /// Returns a [StringPropertyStream] that provides:
+  /// - `.stream` - Emits string chunks as they are parsed
+  /// - `.future` - Completes with the full string value
+  ///
+  /// Use the stream for properties where you want to display content as it
+  /// arrives (e.g., displaying AI-generated text as it's typed).
+  ///
+  /// Example:
+  /// ```dart
+  /// final titleStream = parser.getStringProperty('title');
+  ///
+  /// // React to chunks
+  /// titleStream.stream.listen((chunk) {
+  ///   print('Chunk: $chunk');
+  /// });
+  ///
+  /// // Or wait for complete value
+  /// final fullTitle = await titleStream.future;
+  /// ```
+  ///
+  /// Throws [Exception] if the property at this path is not a string.
   StringPropertyStream getStringProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! StringPropertyStreamController) {
@@ -42,6 +109,19 @@ class JsonStreamParser {
     return controller.propertyStream;
   }
 
+  /// Gets a stream for a number property at the specified [propertyPath].
+  ///
+  /// Returns a [NumberPropertyStream] that provides:
+  /// - `.stream` - Emits the number when complete
+  /// - `.future` - Completes with the parsed number value
+  ///
+  /// Example:
+  /// ```dart
+  /// final age = await parser.getNumberProperty('user.age').future;
+  /// print('Age: $age');
+  /// ```
+  ///
+  /// Throws [Exception] if the property at this path is not a number.
   NumberPropertyStream getNumberProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! NumberPropertyStreamController) {
@@ -59,6 +139,19 @@ class JsonStreamParser {
     return controller.propertyStream;
   }
 
+  /// Gets a stream for a boolean property at the specified [propertyPath].
+  ///
+  /// Returns a [BooleanPropertyStream] that provides:
+  /// - `.stream` - Emits the boolean when complete
+  /// - `.future` - Completes with the parsed boolean value
+  ///
+  /// Example:
+  /// ```dart
+  /// final isActive = await parser.getBooleanProperty('user.active').future;
+  /// print('Active: $isActive');
+  /// ```
+  ///
+  /// Throws [Exception] if the property at this path is not a boolean.
   BooleanPropertyStream getBooleanProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath]
@@ -77,6 +170,19 @@ class JsonStreamParser {
     return controller.propertyStream;
   }
 
+  /// Gets a stream for a null property at the specified [propertyPath].
+  ///
+  /// Returns a [NullPropertyStream] that provides:
+  /// - `.stream` - Emits null when the property completes
+  /// - `.future` - Completes with null
+  ///
+  /// Example:
+  /// ```dart
+  /// await parser.getNullProperty('optionalField').future;
+  /// print('Field is null');
+  /// ```
+  ///
+  /// Throws [Exception] if the property at this path is not null.
   NullPropertyStream getNullProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! NullPropertyStreamController) {
@@ -94,6 +200,20 @@ class JsonStreamParser {
     return controller.propertyStream;
   }
 
+  /// Gets a stream for a map (object) property at the specified [propertyPath].
+  ///
+  /// Returns a [MapPropertyStream] that provides:
+  /// - `.future` - Completes with the full parsed map
+  /// - Chainable property getters to access nested properties
+  ///
+  /// The returned stream is chainable, allowing you to access nested properties:
+  /// ```dart
+  /// final userMap = parser.getMapProperty('user');
+  /// final name = userMap.getStringProperty('name');
+  /// final age = userMap.getNumberProperty('age');
+  /// ```
+  ///
+  /// Throws [Exception] if the property at this path is not a map.
   MapPropertyStream getMapProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! MapPropertyStreamController) {
@@ -111,10 +231,33 @@ class JsonStreamParser {
     return controller.propertyStream;
   }
 
+  /// Gets a stream for a list (array) property at the specified [propertyPath].
+  ///
+  /// Returns a [ListPropertyStream] that provides:
+  /// - `.future` - Completes with the full parsed list
+  /// - `.onElement()` - Callback that fires when each element starts parsing
+  /// - Chainable property getters to access elements
+  ///
+  /// The optional [onElement] callback fires immediately when a new array
+  /// element is discovered, before it's fully parsed. This enables "arm the trap"
+  /// behavior for building reactive UIs:
+  ///
+  /// ```dart
+  /// final items = parser.getListProperty('items', onElement: (element, index) {
+  ///   print('New item at index $index started');
+  ///
+  ///   if (element is MapPropertyStream) {
+  ///     element.getStringProperty('name').stream.listen((name) {
+  ///       print('Item $index name: $name');
+  ///     });
+  ///   }
+  /// });
+  /// ```
+  ///
+  /// Throws [Exception] if the property at this path is not a list.
   ListPropertyStream<E> getListProperty<E extends Object?>(
     String propertyPath, {
-    void Function(PropertyStream propertyStream, int index)?
-        onElement, // make it so that the type of property stream is dependent on the type of the list
+    void Function(PropertyStream propertyStream, int index)? onElement,
   }) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! ListPropertyStreamController) {
