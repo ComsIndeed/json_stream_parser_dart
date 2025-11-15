@@ -1,3 +1,6 @@
+## 0.1.3
+- Fixed demo not showing in Pub.dev
+
 ## 0.1.2
 - Changelog fixes
 - Added main example
