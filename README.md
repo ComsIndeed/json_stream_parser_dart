@@ -221,6 +221,57 @@ void onElement(void Function(PropertyStream element, int index) callback)
 
 Registers a callback that fires immediately when a new array element is discovered, before it's fully parsed.
 
+**Note:** You can set `onElement` callbacks on nested lists in two ways:
+
+1. When calling `getListProperty()`:
+```dart
+// Set callback when getting the list
+final items = parser.getListProperty('items', onElement: (element, index) {
+  print('New item at index $index');
+});
+
+// Or on nested lists
+final nestedList = mapStream.getListProperty('nested', onElement: (element, index) {
+  print('Nested element at index $index');
+});
+```
+
+2. After getting the list stream:
+```dart
+// Get the list first
+final items = parser.getListProperty('items');
+
+// Set callback later
+items.onElement((element, index) {
+  print('New item at index $index');
+});
+```
+
+### Parser Disposal
+
+```dart
+Future<void> dispose()
+```
+
+Disposes the parser and cleans up all resources to prevent memory leaks. This method:
+- Cancels the stream subscription
+- Closes all stream controllers
+- Completes any pending futures with an error (if not already completed)
+- Clears all internal state
+
+```dart
+final parser = JsonStreamParser(llmStream);
+
+// Use the parser...
+final titleStream = parser.getStringProperty("title");
+await titleStream.future;
+
+// Clean up when done
+await parser.dispose();
+```
+
+**Important:** After calling `dispose()`, the parser instance should not be used.
+
 ## What It Supports
 
 - ✅ All JSON types: strings, numbers, booleans, null, objects, arrays
