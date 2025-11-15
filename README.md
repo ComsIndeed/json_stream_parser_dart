@@ -36,7 +36,7 @@ Visit the live demo at: **https://comsindeed.github.io/json_stream_parser_demo/*
 ### Basic Usage
 
 ```dart
-import 'package:streaming_json_parser/json_stream_parser.dart';
+import 'package:llm_json_stream/json_stream_parser.dart';
 
 void main() async {
   final llmStream = getLLMStream(); // Returns Stream<String>
@@ -303,7 +303,7 @@ _Coming soon: Interactive demos showing real-time LLM streaming_
 
 ```yaml
 dependencies:
-  streaming_json_parser: ^0.1.0
+  llm_json_stream: ^0.1.0
 ```
 
 ## License

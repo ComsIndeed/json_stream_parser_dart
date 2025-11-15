@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:streaming_json_parser/classes/json_stream_parser.dart';
+import 'package:llm_json_stream/classes/json_stream_parser.dart';
 import 'package:test/test.dart';
-import 'package:streaming_json_parser/utilities/stream_text_in_chunks.dart';
+import 'package:llm_json_stream/utilities/stream_text_in_chunks.dart';
 
 void main() {
   group('Error Handling Tests', () {

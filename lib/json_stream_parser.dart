@@ -16,7 +16,7 @@
 /// ## Usage
 ///
 /// ```dart
-/// import 'package:streaming_json_parser/json_stream_parser.dart';
+/// import 'package:llm_json_stream/json_stream_parser.dart';
 ///
 /// void main() async {
 ///   final parser = JsonStreamParser(streamFromLLM);
