@@ -1,4 +1,8 @@
-## [0.1.1] - 2024-06-20
+## 0.1.2
+- Changelog fixes
+- Added main example
+
+## 0.1.1
 - Minor documentation updates
 
 ## 0.1.0
