@@ -303,7 +303,7 @@ _Coming soon: Interactive demos showing real-time LLM streaming_
 
 ```yaml
 dependencies:
-  json_stream_parser: ^1.0.0
+  json_stream_parser: ^0.1.0
 ```
 
 ## License
