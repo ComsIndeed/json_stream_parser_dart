@@ -29,6 +29,9 @@ This JSON Stream Parser is designed to solve this exact problem.
 
 This parser functions as a reactive, character-by-character JSON state machine with a clean, high-level API. It parses the stream token-by-token, allowing an application to react to JSON data as it is being formed.
 
+![JsonStreamParser Demo](assets/demo/api_demo.gif)
+Visit the live demo at: **https://comsindeed.github.io/json_stream_parser_demo/**
+
 ### Basic Usage
 
 ```dart
