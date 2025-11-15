@@ -124,12 +124,22 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>> {
         as MapPropertyStream;
   }
 
-  ListPropertyStream<E> getListProperty<E extends Object?>(String key) {
+  ListPropertyStream<E> getListProperty<E extends Object?>(
+    String key, {
+    void Function(PropertyStream propertyStream, int index)? onElement,
+  }) {
     final fullPath = _propertyPath.isEmpty
         ? key
         : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
-    return _parserController.getPropertyStream(fullPath, List)
+
+    final listStream = _parserController.getPropertyStream(fullPath, List)
         as ListPropertyStream<E>;
+
+    if (onElement != null) {
+      listStream.onElement(onElement);
+    }
+
+    return listStream;
   }
 }
 
@@ -172,9 +182,19 @@ class MapPropertyStream extends PropertyStream<Map<String, Object?>> {
         as MapPropertyStream;
   }
 
-  ListPropertyStream<E> getListProperty<E extends Object?>(String key) {
+  ListPropertyStream<E> getListProperty<E extends Object?>(
+    String key, {
+    void Function(PropertyStream propertyStream, int index)? onElement,
+  }) {
     final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController.getPropertyStream(fullPath, List)
+
+    final listStream = _parserController.getPropertyStream(fullPath, List)
         as ListPropertyStream<E>;
+
+    if (onElement != null) {
+      listStream.onElement(onElement);
+    }
+
+    return listStream;
   }
 }

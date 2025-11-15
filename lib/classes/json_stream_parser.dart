@@ -16,7 +16,7 @@ import 'package:json_stream_parser/classes/property_stream_controller.dart';
 
 class JsonStreamParser {
   JsonStreamParser(Stream<String> stream) : _stream = stream {
-    _stream.listen(_parseChunk);
+    _streamSubscription = _stream.listen(_parseChunk);
     _controller = JsonStreamParserController(
       addPropertyChunk: _addPropertyChunk,
       getPropertyStreamController: _getControllerForPath,
@@ -209,7 +209,9 @@ class JsonStreamParser {
 
   // * Fields
   final Stream<String> _stream;
+  late final StreamSubscription<String> _streamSubscription;
   late final JsonStreamParserController _controller;
+  bool _isDisposed = false;
 
   // * Memories
   final Map<String, PropertyStreamController> _propertyControllers = {};
@@ -283,6 +285,83 @@ class JsonStreamParser {
     }
 
     _rootDelegate?.onChunkEnd();
+  }
+
+  /// Disposes the parser and cleans up all resources.
+  ///
+  /// This method:
+  /// - Cancels the stream subscription
+  /// - Closes all stream controllers
+  /// - Completes any pending futures with an error if they haven't completed
+  /// - Clears all internal state
+  ///
+  /// After calling dispose(), this parser instance should not be used.
+  Future<void> dispose() async {
+    if (_isDisposed) {
+      return;
+    }
+
+    _isDisposed = true;
+
+    // Cancel the stream subscription
+    await _streamSubscription.cancel();
+
+    // Close all stream controllers and complete pending futures with errors
+    for (final controller in _propertyControllers.values) {
+      if (controller is StringPropertyStreamController) {
+        if (!controller.completer.isCompleted) {
+          controller.completer.completeError(
+            StateError('Parser was disposed before property completed'),
+          );
+        }
+        if (!controller.streamController.isClosed) {
+          await controller.streamController.close();
+        }
+      } else if (controller is NumberPropertyStreamController) {
+        if (!controller.completer.isCompleted) {
+          controller.completer.completeError(
+            StateError('Parser was disposed before property completed'),
+          );
+        }
+        if (!controller.streamController.isClosed) {
+          await controller.streamController.close();
+        }
+      } else if (controller is BooleanPropertyStreamController) {
+        if (!controller.completer.isCompleted) {
+          controller.completer.completeError(
+            StateError('Parser was disposed before property completed'),
+          );
+        }
+        if (!controller.streamController.isClosed) {
+          await controller.streamController.close();
+        }
+      } else if (controller is NullPropertyStreamController) {
+        if (!controller.completer.isCompleted) {
+          controller.completer.completeError(
+            StateError('Parser was disposed before property completed'),
+          );
+        }
+        if (!controller.streamController.isClosed) {
+          await controller.streamController.close();
+        }
+      } else if (controller is MapPropertyStreamController) {
+        if (!controller.completer.isCompleted) {
+          controller.completer.completeError(
+            StateError('Parser was disposed before property completed'),
+          );
+        }
+      } else if (controller is ListPropertyStreamController) {
+        if (!controller.completer.isCompleted) {
+          controller.completer.completeError(
+            StateError('Parser was disposed before property completed'),
+          );
+        }
+      }
+    }
+
+    // Clear all state
+    _propertyControllers.clear();
+    _rootDelegate = null;
   }
 }
 

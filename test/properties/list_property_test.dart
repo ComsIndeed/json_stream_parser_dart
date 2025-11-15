@@ -380,4 +380,123 @@ void main() {
       expect(single.length, equals(1));
     });
   });
+
+  group('Nested List onElement Callbacks', () {
+    test('onElement can be set via getListProperty on MapPropertyStream',
+        () async {
+      final json = '''
+      {
+        "user": {
+          "items": [
+            {"id": 1, "name": "Item 1"},
+            {"id": 2, "name": "Item 2"}
+          ]
+        }
+      }
+      ''';
+
+      final controller = StreamController<String>();
+      final parser = JsonStreamParser(controller.stream);
+
+      final userMap = parser.getMapProperty('user');
+
+      final callbackResults = <int>[];
+
+      final itemsList = userMap.getListProperty(
+        'items',
+        onElement: (element, index) {
+          callbackResults.add(index);
+        },
+      );
+
+      // Stream the JSON
+      controller.add(json);
+      await controller.close();
+
+      // Wait for the list to complete
+      await itemsList.future;
+
+      // Verify callbacks were called
+      expect(callbackResults, equals([0, 1]));
+    });
+
+    test('onElement can be set via getListProperty on ListPropertyStream',
+        () async {
+      final json = '''
+      {
+        "matrix": [
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9]
+        ]
+      }
+      ''';
+
+      final controller = StreamController<String>();
+      final parser = JsonStreamParser(controller.stream);
+
+      final matrixList = parser.getListProperty('matrix');
+
+      final firstRowCallbacks = <int>[];
+
+      // Get the first row and set onElement callback on it
+      final firstRow = matrixList.getListProperty(
+        '[0]',
+        onElement: (element, index) {
+          firstRowCallbacks.add(index);
+        },
+      );
+
+      // Stream the JSON
+      controller.add(json);
+      await controller.close();
+
+      // Wait for the first row to complete
+      await firstRow.future;
+
+      // Verify callbacks were called for the first row
+      expect(firstRowCallbacks, equals([0, 1, 2]));
+    });
+
+    test('onElement callback receives correct property stream type', () async {
+      final json = '''
+      {
+        "data": {
+          "users": [
+            {"name": "Alice", "age": 30},
+            {"name": "Bob", "age": 25}
+          ]
+        }
+      }
+      ''';
+
+      final controller = StreamController<String>();
+      final parser = JsonStreamParser(controller.stream);
+
+      final dataMap = parser.getMapProperty('data');
+
+      final names = <String>[];
+
+      dataMap.getListProperty(
+        'users',
+        onElement: (element, index) {
+          if (element is MapPropertyStream) {
+            element.getStringProperty('name').future.then((name) {
+              names.add(name);
+            });
+          }
+        },
+      );
+
+      // Stream the JSON
+      controller.add(json);
+      await controller.close();
+
+      // Wait a bit for async callbacks to complete
+      await Future.delayed(Duration(milliseconds: 50));
+
+      // Verify we got the names
+      expect(names, containsAll(['Alice', 'Bob']));
+    });
+  });
 }
