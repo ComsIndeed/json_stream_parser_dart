@@ -1,4 +1,4 @@
-# JSON Stream Parser
+# LLM Json Stream
 
 [![Tests Passing](https://img.shields.io/badge/tests-160%20passing-brightgreen)]()
 [![Dart](https://img.shields.io/badge/dart-%3E%3D3.0.0-blue)]()
@@ -286,12 +286,6 @@ await parser.dispose();
 - ✅ Streaming string values chunk-by-chunk
 - ✅ Reactive list element discovery
 - ✅ Path-based and chainable property access
-
-## Demos
-
-<!-- Placeholder for demo GIFs - will work on both pub.dev and GitHub -->
-
-_Coming soon: Interactive demos showing real-time LLM streaming_
 
 ## Status
 
