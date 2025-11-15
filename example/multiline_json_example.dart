@@ -1,4 +1,4 @@
-import 'package:json_stream_parser/json_stream_parser.dart';
+import 'package:streaming_json_parser/json_stream_parser.dart';
 
 /// Example demonstrating parsing of multiline JSON strings.
 /// This is especially useful when working with triple-quoted strings in Dart.

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:json_stream_parser/classes/json_stream_parser.dart';
+import 'package:streaming_json_parser/classes/json_stream_parser.dart';
 import 'package:test/test.dart';
 
 void main() {

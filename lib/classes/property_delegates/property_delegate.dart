@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_final_fields
 
-import 'package:json_stream_parser/classes/json_stream_parser.dart';
-import 'package:json_stream_parser/classes/mixins.dart';
+import 'package:streaming_json_parser/classes/json_stream_parser.dart';
+import 'package:streaming_json_parser/classes/mixins.dart';
 
 ///
 /// WORKERS THAT NAVIGATE DIFFERENT TOKENS

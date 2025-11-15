@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:json_stream_parser/classes/json_stream_parser.dart';
-import 'package:json_stream_parser/utilities/stream_text_in_chunks.dart';
+import 'package:streaming_json_parser/classes/json_stream_parser.dart';
+import 'package:streaming_json_parser/utilities/stream_text_in_chunks.dart';
 import 'package:test/test.dart';
 
 /// Detailed diagnostic test to understand the chunk=25 bug
