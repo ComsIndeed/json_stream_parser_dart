@@ -12,6 +12,11 @@ ai-summaries/
 # Trash and temporary files
 _trash/
 
+# Debug and development files
+debug_*.dart
+show_*.dart
+todo
+
 # Git and IDE files
 .git/
 .gitignore

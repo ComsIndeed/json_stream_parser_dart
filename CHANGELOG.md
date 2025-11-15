@@ -1,20 +1,13 @@
-## 1.0.1
+## 0.1.0
 
-- **Bug fix**: Parser now correctly handles leading whitespace before root JSON element
-  - Fixed issue where triple-quoted strings with leading newlines would fail to parse
-  - Parser now skips whitespace characters (`\n`, `\r`, `\t`, space) before `{` or `[`
-  - Added 8 comprehensive tests for multiline JSON scenarios
-- **Total: 83 tests passing** ✅
-
-## 1.0.0
-
-- **Initial production release** 🚀
+- **Initial release** 🚀
 - Streaming JSON parser optimized for LLM responses
 - Path-based property subscriptions with chainable API
 - Support for all JSON types: String, Number, Boolean, Null, Map, List
 - Array index access and dynamic element callbacks
+- Handles leading whitespace before root JSON elements
 - Comprehensive error handling and edge case coverage
-- 75 tests passing (54 core tests + 21 error handling tests)
+- **Total: 160 tests passing** ✅
 
 ### Features
 

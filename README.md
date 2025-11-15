@@ -1,6 +1,6 @@
 # JSON Stream Parser
 
-[![Tests Passing](https://img.shields.io/badge/tests-83%20passing-brightgreen)]()
+[![Tests Passing](https://img.shields.io/badge/tests-160%20passing-brightgreen)]()
 [![Dart](https://img.shields.io/badge/dart-%3E%3D3.0.0-blue)]()
 
 A streaming JSON parser for Dart that solves the LLM streaming response problem.
@@ -295,15 +295,15 @@ _Coming soon: Interactive demos showing real-time LLM streaming_
 
 ## Status
 
-⚠️ **Just Released** - This package was just released and may have some bugs. Please report any issues you encounter.
+⚠️ **Early Release** - This is an initial release (0.1.0). The package is well-tested and functional, but the API may evolve based on user feedback. Please report any issues you encounter.
 
-**83 tests passing** - Core functionality is well-tested and ready for use.
+**160 tests passing** - Core functionality is well-tested and ready for use.
 
 ## Installation
 
 ```yaml
 dependencies:
-  json_stream_parser: ^1.0.0
+  json_stream_parser: ^0.1.0
 ```
 
 ## License
