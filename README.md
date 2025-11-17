@@ -1,9 +1,19 @@
 # LLM Json Stream
 
-[![Tests Passing](https://img.shields.io/badge/tests-160%20passing-brightgreen)]()
+[![Tests Passing](https://img.shields.io/badge/tests-338%20passing-brightgreen)]()
 [![Dart](https://img.shields.io/badge/dart-%3E%3D3.0.0-blue)]()
 
 A streaming JSON parser for Dart that solves the LLM streaming response problem.
+
+## Status
+
+⚠️ **Early Release** - The package is well-tested and functional, but is in early release. The API may evolve based on user feedback.
+
+**338 tests passing** - Core functionality is well-tested and ready for use.
+
+**Encountered a bug?**
+1. Please try upgrading to the latest version, as **fixes are released frequently.**
+2. If the issue persists, please [file an issue](https://github.com/ComsIndeed/llm_json_stream/issues) with code or instructions on how to reproduce it. Your feedback is invaluable!
 
 ## The Problem
 
@@ -286,12 +296,6 @@ await parser.dispose();
 - ✅ Streaming string values chunk-by-chunk
 - ✅ Reactive list element discovery
 - ✅ Path-based and chainable property access
-
-## Status
-
-⚠️ **Early Release** - This is an initial release (0.1.0). The package is well-tested and functional, but the API may evolve based on user feedback. Please report any issues you encounter.
-
-**160 tests passing** - Core functionality is well-tested and ready for use.
 
 ## Installation
 
