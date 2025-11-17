@@ -1,3 +1,19 @@
+## 0.2.0
+
+### Fixed
+- Fixed `getMapProperty()` returning empty maps instead of populated content
+- Fixed nested lists and maps within parent maps returning null values
+- Fixed map property delegates not creating controllers for nested structures before child delegates
+- Fixed array element maps (e.g., `items[0]`) not containing their full content
+
+### Changed
+- Map property delegates now collect all child values (primitives, maps, lists) before completing
+- Improved property controller initialization order for complex nested structures
+
+### Tests
+- Added 166 comprehensive tests for map and list value retrieval across different nesting levels
+- Tests cover various chunk sizes (1-50), timing intervals (0-200ms), and nesting depths (1-5 levels)
+
 ## 0.1.4
 - Updated demo to use Github raw content URL
 
@@ -13,28 +29,24 @@
 
 ## 0.1.0
 
-- **Initial release** 🚀
-- Streaming JSON parser optimized for LLM responses
+### Added
+- Initial release of streaming JSON parser optimized for LLM responses
 - Path-based property subscriptions with chainable API
 - Support for all JSON types: String, Number, Boolean, Null, Map, List
 - Array index access and dynamic element callbacks
 - Handles leading whitespace before root JSON elements
-- Comprehensive error handling and edge case coverage
-- **Total: 160 tests passing** ✅
 
 ### Features
+- Reactive property access: Subscribe to JSON properties as they complete in the stream
+- Nested structures: Full support for deeply nested objects and arrays
+- Chainable API: Access nested properties with fluent syntax
+- Type safety: Typed property streams for all JSON types
+- Memory safe: Proper stream lifecycle management and closed stream guards
 
-- **Reactive property access**: Subscribe to JSON properties as they complete in the stream
-- **Nested structures**: Full support for deeply nested objects and arrays
-- **Chainable API**: Access nested properties with fluent syntax
-- **Type safety**: Typed property streams for all JSON types
-- **Memory safe**: Proper stream lifecycle management and closed stream guards
-
-### Fixed Issues
-
-- ✅ Root maps completing properly
-- ✅ Nested maps completing correctly
-- ✅ List chainable property access working
-- ✅ "Cannot add event after closing" errors resolved
-- ✅ Proper delimiter handling between primitives and containers
-- ✅ Child delegate completion detection
+### Fixed
+- Root maps completing properly
+- Nested maps completing correctly
+- List chainable property access working
+- "Cannot add event after closing" errors
+- Proper delimiter handling between primitives and containers
+- Child delegate completion detection

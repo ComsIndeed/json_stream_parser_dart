@@ -90,7 +90,7 @@ void main() {
 
       if (verbose) print('[FINAL] user map completed, name: $name, age: $age');
 
-      expect(userMap, isA<Map>());
+      expect(userMap, {"name": "Charlie", "age": 35});
       expect(name, equals('Charlie'));
       expect(age, equals(35));
     });
