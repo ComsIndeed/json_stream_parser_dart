@@ -74,6 +74,8 @@ void main() async {
 
 The most significant feature is the ability to stream the value of a JSON string property, chunk by chunk.
 
+![String Property Stream](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/string-property-stream.gif)
+
 A traditional parser waits until it has parsed a complete string value (e.g., `"My Great Blog Post"`) before returning it. This parser, via its `StringPropertyStream`, provides a `.stream` that emits chunks of the string's content as they are parsed from the input.
 
 ```dart
@@ -97,6 +99,8 @@ This enables a UI to display text values as if the AI is typing them directly in
 ### 2. "Arm the Trap" List Handling
 
 This parser changes how JSON arrays are handled. Instead of parsing a complete object and then adding it to a list, the `onElement` callback fires immediately when a new list item is first discovered.
+
+![List onElement with String Streams](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/list-onElement-string-streams.gif)
 
 When the parser, while processing an array, encounters the first character of a new element (e.g., an opening `{` or `"`), it fires the `onElement` callback before that element is parsed.
 
@@ -131,6 +135,8 @@ This allows for building UIs that can add new elements instantly and then "fill 
 
 The parser's API provides flexibility by offering both a `Future` and a `Stream` for its properties, allowing the developer to choose the correct tool for the job.
 
+![Atomic Properties](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/atomic-properties.gif)
+
 - `.stream`: Used for properties (like strings) where receiving partial chunks, token-by-token, is desired.
 - `.future`: Used for atomic properties (like `num`, `bool`, or `null`) where the complete value is needed. This `Future` completes as soon as that specific property is fully parsed, even if the rest of the JSON stream is still arriving.
 
@@ -152,6 +158,8 @@ if (propertyStream is MapPropertyStream) {
 }
 ```
 
+![List onElement with Object Futures](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/list-onElement-object-futures.gif)
+
 This API design allows a developer to choose the exact level of reactivity needed for every single field in the JSON.
 
 ## Syntax Examples
@@ -172,6 +180,8 @@ parser.getStringProperty("items[0].name")
 parser.getNumberProperty("data.users[2].profile.age")
 ```
 
+![Nested Property Access](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/nested-property-access.gif)
+
 ### Chainable Access
 
 ```dart
@@ -186,7 +196,9 @@ final firstItem = items.getMapProperty("[0]");
 final price = firstItem.getNumberProperty("price");
 ```
 
-### Dynamic List Iteration
+![Chaining Property Getters](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/chaining-property-getters.gif)
+
+### List Access via Index
 
 ```dart
 final items = parser.getListProperty("items");
@@ -201,6 +213,30 @@ items.onElement((element, index) {
   }
 });
 ```
+
+![List Access via Index](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/list-access-via-index.gif)
+
+### Working with Futures
+
+For properties where you need the complete value rather than streaming chunks:
+
+![String Property Future](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/string-property-future.gif)
+
+## Edge Cases & Special Scenarios
+
+The parser handles various edge cases gracefully:
+
+### Special Characters
+
+Properly escapes and handles special characters in JSON strings:
+
+![Edge Case: Special Characters](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/edge-case-special-characters.gif)
+
+### Multiline JSON
+
+Handles triple-quoted strings and multiline JSON formatting:
+
+![Edge Case: Multiline JSON](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/edge-case-triple-quoted-multi-line-json.gif)
 
 ## API Reference
 
