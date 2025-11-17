@@ -1,3 +1,7 @@
+## 0.2.1
+### Documentation
+- Updated README with new demos showcasing functionality
+
 ## 0.2.0
 
 ### Fixed
