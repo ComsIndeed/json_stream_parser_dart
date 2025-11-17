@@ -119,22 +119,32 @@ void main() {
       final secondNameStream = parser.getStringProperty("items[1].name");
       final secondPriceStream = parser.getNumberProperty("items[1].price");
 
+      final firstMap = parser.getMapProperty("items[0]");
+      final secondMap = parser.getMapProperty("items[1]");
+
       final firstName = await firstNameStream.future.withTestTimeout();
       final firstPrice = await firstPriceStream.future.withTestTimeout();
       final secondName = await secondNameStream.future.withTestTimeout();
       final secondPrice = await secondPriceStream.future.withTestTimeout();
 
-      if (verbose) {
+      final firstMapValue = await firstMap.future.withTestTimeout();
+      final secondMapValue = await secondMap.future.withTestTimeout();
+
+      if (true) {
         print('[FINAL] items[0].name: $firstName');
         print('[FINAL] items[0].price: $firstPrice');
         print('[FINAL] items[1].name: $secondName');
         print('[FINAL] items[1].price: $secondPrice');
+        print('[FINAL] items[0] map: $firstMapValue');
+        print('[FINAL] items[1] map: $secondMapValue');
       }
 
       expect(firstName, equals('Item1'));
       expect(firstPrice, equals(10));
       expect(secondName, equals('Item2'));
       expect(secondPrice, equals(20));
+      expect(firstMapValue, equals({'name': 'Item1', 'price': 10}));
+      expect(secondMapValue, equals({'name': 'Item2', 'price': 20}));
     });
 
     test('empty array', () async {

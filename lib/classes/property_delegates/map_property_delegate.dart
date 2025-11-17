@@ -19,6 +19,9 @@ class MapPropertyDelegate extends PropertyDelegate {
   String _keyBuffer = "";
   PropertyDelegate? _activeChildDelegate;
 
+  // Track all keys that have been parsed
+  List<String> _keys = [];
+
   void onChildComplete() {
     _activeChildDelegate = null;
     // Transition state to allow parsing to continue
@@ -77,11 +80,34 @@ class MapPropertyDelegate extends PropertyDelegate {
 
     if (_state == MapParserState.waitingForValue) {
       if (character == " " || character == ":") return;
-      // Create child delegate with a closure that checks if it's still active
+      // Add this key to our list of keys
+      _keys.add(_keyBuffer);
+
+      // FIRST: Determine the type and create the PropertyStream
+      // This ensures the controller exists before the delegate tries to use it
+      final childPath = newPath(_keyBuffer);
+      final Type streamType;
+      if (character == '"') {
+        streamType = String;
+      } else if (character == '{') {
+        streamType = Map;
+      } else if (character == '[') {
+        streamType = List;
+      } else if (character == 't' || character == 'f') {
+        streamType = bool;
+      } else if (character == 'n') {
+        streamType = Null;
+      } else {
+        streamType = num;
+      }
+      // Create the property stream (which creates the controller)
+      parserController.getPropertyStream(childPath, streamType);
+
+      // THEN: Create child delegate with a closure that checks if it's still active
       PropertyDelegate? childDelegate;
       childDelegate = createDelegate(
         character,
-        propertyPath: newPath(_keyBuffer),
+        propertyPath: childPath,
         jsonStreamParserController: parserController,
         onComplete: () {
           // Only notify parent if this child is still the active one
@@ -140,16 +166,32 @@ class MapPropertyDelegate extends PropertyDelegate {
     return;
   }
 
-  void _completeMap() {
+  void _completeMap() async {
     isDone = true;
+
+    // Build the map by collecting values from child controllers
+    final Map<String, Object?> map = {};
+    for (final key in _keys) {
+      final childPath = newPath(key);
+      try {
+        final controller = parserController.getPropertyStreamController(
+          childPath,
+        );
+        final value = await controller.completer.future;
+        map[key] = value;
+      } catch (e) {
+        // Controller doesn't exist - this shouldn't happen in normal operation
+        // but we'll handle it gracefully
+        map[key] = null;
+      }
+    }
 
     // Complete the map controller if it exists
     try {
       final mapController = parserController.getPropertyStreamController(
         propertyPath,
       );
-      // Create an empty map - the actual values are accessed through child controllers
-      mapController.complete(<String, Object?>{});
+      mapController.complete(map);
     } catch (e) {
       // If there's no map controller, it means no one subscribed to this map
       // This is fine - we just won't complete anything
