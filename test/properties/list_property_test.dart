@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 import 'package:llm_json_stream/utilities/stream_text_in_chunks.dart';
 
 /// Enable verbose logging to debug test execution
-const bool verbose = false;
+const bool verbose = true;
 
 /// Test timeout - fail if not done within this duration
 const testTimeout = Duration(seconds: 5);
@@ -507,6 +507,562 @@ void main() {
 
       // Verify we got the names
       expect(names, containsAll(['Alice', 'Bob']));
+    });
+
+    test('List onElement - Object Futures', () async {
+      final json =
+          '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      final stream = streamTextInChunks(
+          text: json, chunkSize: 5, interval: Duration(milliseconds: 100));
+      final parser = JsonStreamParser(stream);
+
+      final List<Future<Map<String, dynamic>>> itemFutures = [];
+
+      final listProperty = parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) async {
+          if (verbose)
+            print(
+                '[CALLBACK] onElement called for index $index, stream: ${propertyStream.runtimeType}');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          final future = mapPropertyStream.future.then((value) {
+            if (verbose)
+              print('[CALLBACK] Future resolved for index $index: $value');
+            return value as Map<String, dynamic>;
+          });
+          itemFutures.add(future);
+        },
+      );
+
+      // Wait for the list to complete
+      final list = await listProperty.future.withTestTimeout();
+
+      if (verbose) {
+        print('[TEST] List completed: $list');
+        print('[TEST] Number of item futures: ${itemFutures.length}');
+      }
+
+      // Verify we have 2 items
+      expect(itemFutures.length, equals(2));
+
+      // Wait for each future and verify contents
+      final item1 = await itemFutures[0].withTestTimeout();
+      final item2 = await itemFutures[1].withTestTimeout();
+
+      if (verbose) {
+        print('[FINAL] item1: $item1');
+        print('[FINAL] item2: $item2');
+      }
+
+      expect(item1, isA<Map<String, dynamic>>());
+      expect(item2, isA<Map<String, dynamic>>());
+      expect(item1, {'id': 1, 'name': 'Widget'});
+      expect(item2, {'id': 2, 'name': 'Gadget'});
+      expect(item1['id'], equals(1));
+      expect(item1['name'], equals('Widget'));
+      expect(item2['id'], equals(2));
+      expect(item2['name'], equals('Gadget'));
+    });
+
+    test('List onElement - Object Futures (Flutter App Scenario)', () async {
+      // This test mimics exactly what happens in the Flutter app
+      final json =
+          '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      
+      final controller = StreamController<String>();
+      final parser = JsonStreamParser(controller.stream);
+
+      final List<Future<Map<String, dynamic>>> itemFutures = [];
+
+      // The Flutter app calls getListProperty in initState WITHOUT awaiting
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) async {
+          if (verbose) print('[CALLBACK] onElement called for index $index');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          // The Flutter app immediately adds the future to the list
+          final future = mapPropertyStream.future.then((value) {
+            if (verbose) print('[CALLBACK] Future $index resolved: $value');
+            return value as Map<String, dynamic>;
+          });
+          itemFutures.add(future);
+        },
+      );
+
+      // Now simulate the Flutter app's streaming behavior
+      if (verbose) print('[TEST] Starting to stream JSON...');
+      
+      // Stream the JSON in chunks (simulating the Flutter app)
+      final chunks = <String>[];
+      for (var i = 0; i < json.length; i += 5) {
+        chunks.add(json.substring(i, i + 5 > json.length ? json.length : i + 5));
+      }
+      
+      for (final chunk in chunks) {
+        controller.add(chunk);
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+      
+      if (verbose) print('[TEST] Closing controller...');
+      await controller.close();
+      
+      if (verbose) print('[TEST] Number of futures: ${itemFutures.length}');
+
+      // Now let's try to access them - this should work eventually
+      // because FutureBuilder waits for the future
+      expect(itemFutures.length, equals(2));
+      
+      if (verbose) print('[TEST] Waiting for first future...');
+      final item1 = await itemFutures[0].timeout(
+        Duration(seconds: 2),
+        onTimeout: () {
+          if (verbose) print('[ERROR] First future timed out!');
+          return <String, dynamic>{};
+        },
+      );
+      if (verbose) print('[TEST] First item: $item1');
+      
+      if (verbose) print('[TEST] Waiting for second future...');
+      final item2 = await itemFutures[1].timeout(
+        Duration(seconds: 2),
+        onTimeout: () {
+          if (verbose) print('[ERROR] Second future timed out!');
+          return <String, dynamic>{};
+        },
+      );
+      if (verbose) print('[TEST] Second item: $item2');
+      
+      expect(item1.isNotEmpty, isTrue, reason: 'First item should not be empty');
+      expect(item2.isNotEmpty, isTrue, reason: 'Second item should not be empty');
+      expect(item1, {'id': 1, 'name': 'Widget'});
+      expect(item2, {'id': 2, 'name': 'Gadget'});
+    });
+
+    test('List onElement - Premature Future Access Bug', () async {
+      // This test checks if accessing map.future immediately returns empty map
+      final controller = StreamController<String>();
+      final parser = JsonStreamParser(controller.stream);
+
+      MapPropertyStream? capturedStream;
+
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) async {
+          if (verbose) print('[CALLBACK] onElement called, capturing stream');
+          capturedStream = propertyStream as MapPropertyStream;
+        },
+      );
+
+      // Start streaming just the opening parts
+      controller.add('{"products": [');
+      await Future.delayed(Duration(milliseconds: 50));
+      controller.add('{"');
+      await Future.delayed(Duration(milliseconds: 50));
+      
+      // At this point, onElement should have been called
+      expect(capturedStream, isNotNull, reason: 'Stream should be captured');
+      
+      if (verbose) print('[TEST] Checking if future resolves immediately to empty map...');
+      
+      // Try to get the future - it should NOT resolve yet
+      final mapFuture = capturedStream!.future;
+      var resolved = false;
+      var resultMap = <String, dynamic>{};
+      
+      // Race the future against a timeout
+      await Future.any([
+        mapFuture.then((value) {
+          resolved = true;
+          resultMap = value as Map<String, dynamic>;
+          if (verbose) print('[TEST] Future resolved early with: $resultMap');
+        }),
+        Future.delayed(Duration(milliseconds: 200)).then((_) {
+          if (verbose) print('[TEST] Future did not resolve early (good!)');
+        }),
+      ]);
+      
+      expect(resolved, isFalse, reason: 'Map future should not resolve before map is complete');
+      
+      // Now complete the stream
+      controller.add('id": 1, "name": "Widget"}]}');
+      await controller.close();
+      
+      // Now the future should resolve
+      final finalMap = await mapFuture.timeout(Duration(seconds: 1));
+      if (verbose) print('[TEST] Final map: $finalMap');
+      
+      expect(finalMap, {'id': 1, 'name': 'Widget'});
+    });
+
+    test('List onElement - EXACT Flutter Bug Reproduction', () async {
+      // This reproduces the EXACT issue in the Flutter app
+      final json =
+          '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      
+      final controller = StreamController<String>.broadcast();
+      final parser = JsonStreamParser(controller.stream);
+
+      final List<Map<String, dynamic>> items = [];
+
+      // This is EXACTLY what the Flutter app does
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) {
+          if (verbose) print('[CALLBACK] onElement called for index $index');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          
+          // The Flutter app calls .then() immediately
+          mapPropertyStream.future.then((map) {
+            if (verbose) print('[THEN] Map resolved for index $index: $map');
+            items.add(map as Map<String, dynamic>);
+          });
+        },
+      );
+
+      if (verbose) print('[TEST] Starting to stream JSON...');
+      
+      // Stream the JSON
+      final chunks = <String>[];
+      for (var i = 0; i < json.length; i += 5) {
+        chunks.add(json.substring(i, i + 5 > json.length ? json.length : i + 5));
+      }
+      
+      for (final chunk in chunks) {
+        controller.add(chunk);
+        await Future.delayed(Duration(milliseconds: 10));
+      }
+      
+      if (verbose) print('[TEST] Closing controller...');
+      await controller.close();
+      
+      // Wait for the .then() callbacks to fire
+      await Future.delayed(Duration(milliseconds: 200));
+      
+      if (verbose) print('[TEST] Number of items: ${items.length}');
+      for (var i = 0; i < items.length; i++) {
+        if (verbose) print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+      }
+      
+      // This is where the bug should show up
+      expect(items.length, equals(2), reason: 'Should have 2 items');
+      expect(items[0].isEmpty, isFalse, reason: 'First item should NOT be empty');
+      expect(items[1].isEmpty, isFalse, reason: 'Second item should NOT be empty');
+      expect(items[0], {'id': 1, 'name': 'Widget'});
+      expect(items[1], {'id': 2, 'name': 'Gadget'});
+    });
+
+    test('List onElement - Flutter Timing Bug (Parser before Callback)', () async {
+      // Test if creating parser and THEN setting up callback causes issues
+      final json =
+          '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      
+      final controller = StreamController<String>.broadcast();
+      
+      // Create parser FIRST (Flutter app does this)
+      final parser = JsonStreamParser(controller.stream);
+      
+      if (verbose) print('[TEST] Parser created, waiting before setting up callback...');
+      
+      // Small delay to simulate setState() rebuild timing
+      await Future.delayed(Duration(milliseconds: 10));
+      
+      final List<Map<String, dynamic>> items = [];
+
+      // NOW set up the callback (simulating child widget initState after parent setState)
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) {
+          if (verbose) print('[CALLBACK] onElement called for index $index');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          
+          mapPropertyStream.future.then((map) {
+            if (verbose) print('[THEN] Map resolved for index $index: $map');
+            items.add(map as Map<String, dynamic>);
+          });
+        },
+      );
+
+      if (verbose) print('[TEST] Starting to stream JSON...');
+      
+      // NOW start streaming (Flutter app does this after setState)
+      final chunks = <String>[];
+      for (var i = 0; i < json.length; i += 5) {
+        chunks.add(json.substring(i, i + 5 > json.length ? json.length : i + 5));
+      }
+      
+      for (final chunk in chunks) {
+        controller.add(chunk);
+        await Future.delayed(Duration(milliseconds: 10));
+      }
+      
+      if (verbose) print('[TEST] Closing controller...');
+      await controller.close();
+      
+      // Wait for the .then() callbacks to fire
+      await Future.delayed(Duration(milliseconds: 200));
+      
+      if (verbose) print('[TEST] Number of items: ${items.length}');
+      for (var i = 0; i < items.length; i++) {
+        if (verbose) print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+      }
+      
+      expect(items.length, equals(2), reason: 'Should have 2 items');
+      expect(items[0].isEmpty, isFalse, reason: 'First item should NOT be empty');
+      expect(items[1].isEmpty, isFalse, reason: 'Second item should NOT be empty');
+      expect(items[0], {'id': 1, 'name': 'Widget'});
+      expect(items[1], {'id': 2, 'name': 'Gadget'});
+    });
+
+    test('List onElement - Early Stream Close Bug', () async {
+      // Test if closing stream too early causes empty maps
+      final json =
+          '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      
+      final controller = StreamController<String>.broadcast();
+      final parser = JsonStreamParser(controller.stream);
+
+      final List<Map<String, dynamic>> items = [];
+
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) {
+          if (verbose) print('[CALLBACK] onElement called for index $index');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          
+          mapPropertyStream.future.then((map) {
+            if (verbose) print('[THEN] Map resolved for index $index: $map (isEmpty: ${(map as Map).isEmpty})');
+            items.add(map as Map<String, dynamic>);
+          });
+        },
+      );
+
+      if (verbose) print('[TEST] Streaming JSON ALL AT ONCE...');
+      
+      // Add all JSON at once
+      controller.add(json);
+      
+      if (verbose) print('[TEST] Closing controller IMMEDIATELY...');
+      // Close immediately without waiting
+      await controller.close();
+      
+      if (verbose) print('[TEST] Waiting for callbacks...');
+      // Wait for the .then() callbacks to fire
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      if (verbose) print('[TEST] Number of items: ${items.length}');
+      for (var i = 0; i < items.length; i++) {
+        if (verbose) print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+      }
+      
+      expect(items.length, equals(2), reason: 'Should have 2 items');
+      
+      if (items[0].isEmpty) {
+        if (verbose) print('[BUG REPRODUCED!] First item is empty!');
+      }
+      if (items[1].isEmpty) {
+        if (verbose) print('[BUG REPRODUCED!] Second item is empty!');
+      }
+      
+      expect(items[0].isEmpty, isFalse, reason: 'First item should NOT be empty');
+      expect(items[1].isEmpty, isFalse, reason: 'Second item should NOT be empty');
+      expect(items[0], {'id': 1, 'name': 'Widget'});
+      expect(items[1], {'id': 2, 'name': 'Gadget'});
+    });
+
+    test('List onElement - EXACT FLUTTER SCENARIO - Maps Resolve Immediately', () async {
+      // This test EXACTLY mimics what the other Copilot's test shows
+      final json = '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      
+      final controller = StreamController<String>.broadcast();
+      final parser = JsonStreamParser(controller.stream);
+
+      final List<Map<String, dynamic>> items = [];
+
+      // Set up the callback FIRST (before streaming)
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) {
+          if (verbose) print('[onElement] Called for index $index');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          
+          // This is what the Flutter app does - call .then() immediately
+          mapPropertyStream.future.then((map) {
+            if (verbose) print('[.then()] Map resolved for index $index: $map (isEmpty: ${(map as Map).isEmpty})');
+            items.add(map as Map<String, dynamic>);
+          });
+          
+          if (verbose) print('[onElement] Returned (callback registered)');
+        },
+      );
+
+      if (verbose) print('[TEST] Streaming entire JSON at once...');
+      // Stream the entire JSON at once like the other Copilot's test
+      controller.add(json);
+      
+      if (verbose) print('[TEST] Closing stream...');
+      await controller.close();
+      
+      if (verbose) print('[TEST] Waiting 500ms for callbacks...');
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      if (verbose) print('[TEST] Number of items: ${items.length}');
+      for (var i = 0; i < items.length; i++) {
+        if (verbose) print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+      }
+      
+      // If this fails, the bug is in the PARSER
+      expect(items.length, equals(2), reason: 'Should have 2 items');
+      expect(items[0].isEmpty, isFalse, reason: 'First map should NOT be empty - THIS IS THE BUG');
+      expect(items[1].isEmpty, isFalse, reason: 'Second map should NOT be empty - THIS IS THE BUG');
+    });
+
+    test('List onElement - AWAIT in onElement callback', () async {
+      // Test if AWAITING in the callback makes a difference
+      final json = '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      
+      final controller = StreamController<String>.broadcast();
+      final parser = JsonStreamParser(controller.stream);
+
+      final List<Map<String, dynamic>> items = [];
+
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) async {
+          if (verbose) print('[onElement] Called for index $index');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          
+          // Try AWAITING instead of .then()
+          if (verbose) print('[onElement] About to await future for index $index...');
+          final map = await mapPropertyStream.future;
+          if (verbose) print('[onElement] Got map for index $index: $map (isEmpty: ${map.isEmpty})');
+          items.add(map as Map<String, dynamic>);
+        },
+      );
+
+      if (verbose) print('[TEST] Streaming entire JSON at once...');
+      controller.add(json);
+      
+      if (verbose) print('[TEST] Closing stream...');
+      await controller.close();
+      
+      if (verbose) print('[TEST] Waiting 500ms...');
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      if (verbose) print('[TEST] Number of items: ${items.length}');
+      for (var i = 0; i < items.length; i++) {
+        if (verbose) print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+      }
+      
+      expect(items.length, equals(2));
+      expect(items[0].isEmpty, isFalse, reason: 'Maps should not be empty with await');
+      expect(items[1].isEmpty, isFalse);
+    });
+
+    test('List onElement - Broadcast Stream (Flutter App Uses This)', () async {
+      // The Flutter app uses StreamController<String>.broadcast()
+      final json =
+          '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      
+      final controller = StreamController<String>.broadcast();
+      final parser = JsonStreamParser(controller.stream);
+
+      final List<Future<Map<String, dynamic>>> itemFutures = [];
+
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) async {
+          if (verbose) print('[CALLBACK] onElement called for index $index');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          final future = mapPropertyStream.future.then((value) {
+            if (verbose) print('[CALLBACK] Future $index resolved: $value');
+            return value as Map<String, dynamic>;
+          });
+          itemFutures.add(future);
+        },
+      );
+
+      if (verbose) print('[TEST] Starting to stream JSON...');
+      
+      // Stream the JSON in chunks
+      final chunks = <String>[];
+      for (var i = 0; i < json.length; i += 5) {
+        chunks.add(json.substring(i, i + 5 > json.length ? json.length : i + 5));
+      }
+      
+      for (final chunk in chunks) {
+        controller.add(chunk);
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+      
+      if (verbose) print('[TEST] Closing controller...');
+      await controller.close();
+      
+      if (verbose) print('[TEST] Number of futures: ${itemFutures.length}');
+
+      expect(itemFutures.length, equals(2));
+      
+      if (verbose) print('[TEST] Waiting for futures...');
+      final item1 = await itemFutures[0].timeout(Duration(seconds: 2));
+      final item2 = await itemFutures[1].timeout(Duration(seconds: 2));
+      
+      if (verbose) {
+        print('[TEST] First item: $item1');
+        print('[TEST] Second item: $item2');
+      }
+      
+      expect(item1, {'id': 1, 'name': 'Widget'});
+      expect(item2, {'id': 2, 'name': 'Gadget'});
+    });
+
+    test('List onElement - Check for Empty Map Bug', () async {
+      // This test checks if maps are completing with empty content
+      final json =
+          '{"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}';
+      
+      final controller = StreamController<String>.broadcast();
+      final parser = JsonStreamParser(controller.stream);
+
+      final List<Map<String, dynamic>> resolvedMaps = [];
+
+      parser.getListProperty(
+        "products",
+        onElement: (propertyStream, index) async {
+          if (verbose) print('[CALLBACK] onElement called for index $index');
+          final mapPropertyStream = propertyStream as MapPropertyStream;
+          
+          // Add a listener to track when and what the future resolves to
+          mapPropertyStream.future.then((value) {
+            final map = value as Map<String, dynamic>;
+            if (verbose) print('[RESOLVED] Index $index resolved to: $map (isEmpty: ${map.isEmpty})');
+            resolvedMaps.add(map);
+            
+            // Check if it's empty - this would be the bug!
+            if (map.isEmpty) {
+              if (verbose) print('[BUG FOUND!] Map $index is empty!');
+            }
+          });
+        },
+      );
+
+      if (verbose) print('[TEST] Starting to stream JSON...');
+      
+      // Stream the entire JSON at once to rule out chunking issues
+      controller.add(json);
+      await Future.delayed(Duration(milliseconds: 100));
+      
+      if (verbose) print('[TEST] Closing controller...');
+      await controller.close();
+      
+      // Wait a bit for futures to resolve
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      if (verbose) print('[TEST] Number of resolved maps: ${resolvedMaps.length}');
+      
+      expect(resolvedMaps.length, equals(2));
+      expect(resolvedMaps[0].isEmpty, isFalse, reason: 'First map should not be empty');
+      expect(resolvedMaps[1].isEmpty, isFalse, reason: 'Second map should not be empty');
+      expect(resolvedMaps[0], {'id': 1, 'name': 'Widget'});
+      expect(resolvedMaps[1], {'id': 2, 'name': 'Gadget'});
     });
   });
 }
