@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:llm_json_stream/classes/json_stream_parser.dart';
 import 'package:llm_json_stream/classes/property_stream_controller.dart';
+import 'package:llm_json_stream/mixins/property_getter_mixin.dart';
 
 /// Base class for all property streams.
 ///
@@ -126,14 +127,20 @@ class BooleanPropertyStream extends PropertyStream<bool> {
 ///   // Set up subscriptions for this element
 /// });
 /// ```
-class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>> {
+class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>>
+    with PropertyGetterMixin {
   final String _propertyPath;
+  final Stream<List<T>> _stream;
+
+  Stream<List<T>> get stream => _stream;
 
   ListPropertyStream({
+    required Stream<List<T>> stream,
     required super.future,
     required super.parserController,
     required String propertyPath,
-  }) : _propertyPath = propertyPath;
+  })  : _propertyPath = propertyPath,
+        _stream = stream;
 
   /// Registers a callback that fires when each array element starts parsing.
   ///
@@ -161,69 +168,21 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>> {
   ) {
     // Add callback to the controller's list, not our local copy
     final controller =
-        _parserController.getPropertyStreamController(_propertyPath)
+        parserController.getPropertyStreamController(_propertyPath)
             as ListPropertyStreamController<T>;
     controller.addOnElementCallback(callback);
   }
 
-  StringPropertyStream getStringProperty(String key) {
+  @override
+  String buildPropertyPath(String key) {
     // For array indices like "[0]", don't add a dot separator
-    final fullPath = _propertyPath.isEmpty
+    return _propertyPath.isEmpty
         ? key
         : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
-    return _parserController.getPropertyStream(fullPath, String)
-        as StringPropertyStream;
   }
 
-  BooleanPropertyStream getBooleanProperty(String key) {
-    final fullPath = _propertyPath.isEmpty
-        ? key
-        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
-    return _parserController.getPropertyStream(fullPath, bool)
-        as BooleanPropertyStream;
-  }
-
-  NumberPropertyStream getNumberProperty(String key) {
-    final fullPath = _propertyPath.isEmpty
-        ? key
-        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
-    return _parserController.getPropertyStream(fullPath, num)
-        as NumberPropertyStream;
-  }
-
-  NullPropertyStream getNullProperty(String key) {
-    final fullPath = _propertyPath.isEmpty
-        ? key
-        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
-    return _parserController.getPropertyStream(fullPath, Null)
-        as NullPropertyStream;
-  }
-
-  MapPropertyStream getMapProperty(String key) {
-    final fullPath = _propertyPath.isEmpty
-        ? key
-        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
-    return _parserController.getPropertyStream(fullPath, Map)
-        as MapPropertyStream;
-  }
-
-  ListPropertyStream<E> getListProperty<E extends Object?>(
-    String key, {
-    void Function(PropertyStream propertyStream, int index)? onElement,
-  }) {
-    final fullPath = _propertyPath.isEmpty
-        ? key
-        : (key.startsWith('[') ? '$_propertyPath$key' : '$_propertyPath.$key');
-
-    final listStream = _parserController.getPropertyStream(fullPath, List)
-        as ListPropertyStream<E>;
-
-    if (onElement != null) {
-      listStream.onElement(onElement);
-    }
-
-    return listStream;
-  }
+  @override
+  JsonStreamParserController get parserController => _parserController;
 }
 
 /// A property stream for JSON object (map) values.
@@ -238,58 +197,26 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>> {
 /// final name = userMap.getStringProperty('name');
 /// final age = userMap.getNumberProperty('age');
 /// ```
-class MapPropertyStream extends PropertyStream<Map<String, Object?>> {
+class MapPropertyStream extends PropertyStream<Map<String, Object?>>
+    with PropertyGetterMixin {
   final String _propertyPath;
+  final Stream<Map<String, dynamic>> _stream;
+
+  Stream<Map<String, dynamic>> get stream => _stream;
 
   MapPropertyStream({
     required super.future,
     required super.parserController,
     required String propertyPath,
-  }) : _propertyPath = propertyPath;
+    required Stream<Map<String, dynamic>> stream,
+  })  : _propertyPath = propertyPath,
+        _stream = stream;
 
-  StringPropertyStream getStringProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController.getPropertyStream(fullPath, String)
-        as StringPropertyStream;
+  @override
+  String buildPropertyPath(String key) {
+    return _propertyPath.isEmpty ? key : '$_propertyPath.$key';
   }
 
-  BooleanPropertyStream getBooleanProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController.getPropertyStream(fullPath, bool)
-        as BooleanPropertyStream;
-  }
-
-  NumberPropertyStream getNumberProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController.getPropertyStream(fullPath, num)
-        as NumberPropertyStream;
-  }
-
-  NullPropertyStream getNullProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController.getPropertyStream(fullPath, Null)
-        as NullPropertyStream;
-  }
-
-  MapPropertyStream getMapProperty(String key) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-    return _parserController.getPropertyStream(fullPath, Map)
-        as MapPropertyStream;
-  }
-
-  ListPropertyStream<E> getListProperty<E extends Object?>(
-    String key, {
-    void Function(PropertyStream propertyStream, int index)? onElement,
-  }) {
-    final fullPath = _propertyPath.isEmpty ? key : '$_propertyPath.$key';
-
-    final listStream = _parserController.getPropertyStream(fullPath, List)
-        as ListPropertyStream<E>;
-
-    if (onElement != null) {
-      listStream.onElement(onElement);
-    }
-
-    return listStream;
-  }
+  @override
+  JsonStreamParserController get parserController => _parserController;
 }

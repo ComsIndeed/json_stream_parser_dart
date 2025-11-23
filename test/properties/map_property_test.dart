@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:llm_json_stream/classes/json_stream_parser.dart';
+import 'package:llm_json_stream/classes/property_stream.dart';
 import 'package:test/test.dart';
 import 'package:llm_json_stream/utilities/stream_text_in_chunks.dart';
 
@@ -223,8 +226,10 @@ void main() {
       if (verbose) print('[GOT MAP] user: $userMap');
 
       // Now chain to get properties from that map
-      final nameStream = userMapStream.getStringProperty("name");
-      final emailStream = userMapStream.getStringProperty("email");
+      final nameStream =
+          userMapStream.getStringProperty("name") as StringPropertyStream;
+      final emailStream =
+          userMapStream.getStringProperty("email") as StringPropertyStream;
 
       final name = await nameStream.future.withTestTimeout();
       final email = await emailStream.future.withTestTimeout();
@@ -328,6 +333,179 @@ void main() {
 
       expect(name, equals('Frank'));
       expect(age, equals(40));
+    });
+
+    test('Map property `mapPropertyStream.stream` test', () async {
+      final jsonChunks = [
+        '{"posts":[{"title":"A',
+        ' much longer',
+        ' title to te',
+        'st the parser',
+        ' with more ch',
+        'aracters and ',
+        'complexity","',
+        'content":"Thi',
+        's is a longer',
+        ' example with',
+        ' more content ',
+        'to test the p',
+        'arser","autho',
+        'r":"John Doe,',
+        ' a renowned ',
+        'author with m',
+        'any publicati',
+        'ons"}]}'
+      ];
+
+      final streamController = StreamController<String>();
+      final parser = JsonStreamParser(streamController.stream);
+      final mapStream = parser.getMapProperty('posts[0]');
+
+      // Collect all emitted maps
+      final emittedMaps = <Map<String, dynamic>>[];
+      mapStream.stream.listen((map) {
+        emittedMaps.add(Map<String, dynamic>.from(map));
+      });
+
+      streamController.add(jsonChunks[0]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.isNotEmpty, true,
+          reason: 'Map should have emitted after chunk 0');
+      expect(emittedMaps.last['title'], 'A');
+      expect(emittedMaps.last['content'], isNull);
+      expect(emittedMaps.last['author'], isNull);
+
+      streamController.add(jsonChunks[1]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], 'A much longer');
+      expect(emittedMaps.last['content'], isNull);
+      expect(emittedMaps.last['author'], isNull);
+
+      const fullTitle =
+          'A much longer title to test the parser with more characters and complexity';
+      const fullContent =
+          'This is a longer example with more content to test the parser';
+      const fullAuthor = 'John Doe, a renowned author with many publications';
+
+      // Chunk 2 – title continues
+      streamController.add(jsonChunks[2]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], 'A much longer title to te');
+      expect(emittedMaps.last['content'], isNull);
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 3 – title continues
+      streamController.add(jsonChunks[3]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(
+          emittedMaps.last['title'], 'A much longer title to test the parser');
+      expect(emittedMaps.last['content'], isNull);
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 4 – title continues
+      streamController.add(jsonChunks[4]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'],
+          'A much longer title to test the parser with more ch');
+      expect(emittedMaps.last['content'], isNull);
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 5 – title continues
+      streamController.add(jsonChunks[5]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'],
+          'A much longer title to test the parser with more characters and ');
+      expect(emittedMaps.last['content'], isNull);
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 6 – title completes
+      streamController.add(jsonChunks[6]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], isNull);
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 7 – content starts
+      streamController.add(jsonChunks[7]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], 'Thi');
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 8 – content continues
+      streamController.add(jsonChunks[8]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], 'This is a longer');
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 9 – content continues
+      streamController.add(jsonChunks[9]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], 'This is a longer example with');
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 10 – content continues
+      streamController.add(jsonChunks[10]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'],
+          'This is a longer example with more content ');
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 11 – content continues
+      streamController.add(jsonChunks[11]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'],
+          'This is a longer example with more content to test the p');
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 12 – content completes
+      streamController.add(jsonChunks[12]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], fullContent);
+      expect(emittedMaps.last['author'], isNull);
+
+      // Chunk 13 – author starts
+      streamController.add(jsonChunks[13]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], fullContent);
+      expect(emittedMaps.last['author'], 'John Doe,');
+
+      // Chunk 14 – author continues
+      streamController.add(jsonChunks[14]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], fullContent);
+      expect(emittedMaps.last['author'], 'John Doe, a renowned ');
+
+      // Chunk 15 – author continues
+      streamController.add(jsonChunks[15]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], fullContent);
+      expect(emittedMaps.last['author'], 'John Doe, a renowned author with m');
+
+      // Chunk 16 – author continues
+      streamController.add(jsonChunks[16]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], fullContent);
+      expect(emittedMaps.last['author'],
+          'John Doe, a renowned author with many publicati');
+
+      // Chunk 17 – author completes and map finishes
+      streamController.add(jsonChunks[17]);
+      await Future.delayed(Duration(milliseconds: 10));
+      expect(emittedMaps.last['title'], fullTitle);
+      expect(emittedMaps.last['content'], fullContent);
+      expect(emittedMaps.last['author'], fullAuthor);
+
+      streamController.close();
     });
   });
 }

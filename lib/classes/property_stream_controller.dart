@@ -41,7 +41,7 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
     }
   }
 
-  final streamController = StreamController<String>();
+  final streamController = StreamController<String>.broadcast();
 
   @override
 
@@ -71,6 +71,20 @@ class MapPropertyStreamController
   @override
   late final MapPropertyStream propertyStream;
 
+  final streamController = StreamController<Map<String, dynamic>>.broadcast();
+
+  void addNew(Map<String, dynamic> map) {
+    if (!_isClosed) {
+      streamController.add(map);
+    }
+  }
+
+  @override
+  void complete(Map<String, Object?> value) {
+    streamController.close();
+    super.complete(value);
+  }
+
   MapPropertyStreamController({
     required super.parserController,
     required super.propertyPath,
@@ -79,6 +93,7 @@ class MapPropertyStreamController
       future: completer.future,
       parserController: parserController,
       propertyPath: propertyPath,
+      stream: streamController.stream,
     );
   }
 }
@@ -88,6 +103,14 @@ class ListPropertyStreamController<T extends Object?>
   @override
   late final ListPropertyStream<T> propertyStream;
   List<void Function(PropertyStream, int)> onElementCallbacks = [];
+
+  final streamController = StreamController<List<T>>.broadcast();
+
+  void addNew(List<T> list) {
+    if (!_isClosed) {
+      streamController.add(list);
+    }
+  }
 
   void addOnElementCallback(
     void Function(PropertyStream propertyStream, int index) callback,
@@ -103,11 +126,14 @@ class ListPropertyStreamController<T extends Object?>
       future: completer.future,
       parserController: parserController,
       propertyPath: propertyPath,
+      stream: streamController.stream,
     );
   }
 
   @override
   void complete(covariant List<Object?> value) {
+    addNew(List<T>.from(value));
+    streamController.close();
     if (!_isClosed) {
       // Cast the list to List<T>
       // This handles the case where we receive a List<Object?> that needs to be List<T>

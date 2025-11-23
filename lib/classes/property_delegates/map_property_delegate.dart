@@ -1,6 +1,10 @@
 // ignore_for_file: prefer_final_fields
 
+import 'dart:async';
+
 import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
+import 'package:llm_json_stream/classes/property_stream_controller.dart';
+import 'package:llm_json_stream/json_stream_parser.dart';
 
 class MapPropertyDelegate extends PropertyDelegate {
   // * String propertyPath
@@ -22,6 +26,21 @@ class MapPropertyDelegate extends PropertyDelegate {
   // Track all keys that have been parsed
   List<String> _keys = [];
 
+  // The current map being built
+  Map<String, dynamic> _currentMap = {};
+  StreamSubscription? _childSubscription;
+
+  void _emitUpdate() {
+    try {
+      final controller =
+          parserController.getPropertyStreamController(propertyPath)
+              as MapPropertyStreamController;
+      controller.addNew(Map<String, dynamic>.from(_currentMap));
+    } catch (_) {
+      // Controller doesn't exist - no one is listening
+    }
+  }
+
   void onChildComplete() {
     _activeChildDelegate = null;
     // Transition state to allow parsing to continue
@@ -36,7 +55,11 @@ class MapPropertyDelegate extends PropertyDelegate {
     if (_activeChildDelegate != null && !_activeChildDelegate!.isDone) {
       _activeChildDelegate?.onChunkEnd();
     }
-    // Maps don't emit chunks - they just complete with an empty map at the end
+
+    final controller =
+        parserController.getPropertyStreamController(propertyPath)
+            as MapPropertyStreamController;
+    controller.addNew(Map<String, dynamic>.from(_currentMap));
   }
 
   @override
@@ -83,6 +106,9 @@ class MapPropertyDelegate extends PropertyDelegate {
       // Add this key to our list of keys
       _keys.add(_keyBuffer);
 
+      _childSubscription?.cancel();
+      _childSubscription = null;
+
       // FIRST: Determine the type and create the PropertyStream
       // This ensures the controller exists before the delegate tries to use it
       final childPath = newPath(_keyBuffer);
@@ -100,8 +126,35 @@ class MapPropertyDelegate extends PropertyDelegate {
       } else {
         streamType = num;
       }
-      // Create the property stream (which creates the controller)
-      parserController.getPropertyStream(childPath, streamType);
+      final propertyStream =
+          parserController.getPropertyStream(childPath, streamType);
+      _currentMap[_keyBuffer] = null;
+      final currentKey = _keyBuffer;
+
+      // Set up a subscription to update the map when the child emits values
+      // Only subscribe to types that can emit multiple events (String, Map, List)
+      if (propertyStream is MapPropertyStream) {
+        _childSubscription = propertyStream.stream.listen((value) {
+          _currentMap[currentKey] = value;
+          _emitUpdate();
+        });
+      } else if (propertyStream is ListPropertyStream) {
+        _childSubscription = propertyStream.stream.listen((value) {
+          _currentMap[currentKey] = value;
+          _emitUpdate();
+        });
+      } else if (propertyStream is StringPropertyStream) {
+        _childSubscription = propertyStream.stream.listen((value) {
+          if (_currentMap[currentKey] == null) {
+            _currentMap[currentKey] = value;
+          } else {
+            _currentMap[currentKey] = _currentMap[currentKey] + value;
+          }
+          _emitUpdate();
+        });
+      }
+      // Note: We don't subscribe to Number, Boolean, or Null streams
+      // because they only emit once and we get their value from the completer
 
       // THEN: Create child delegate with a closure that checks if it's still active
       PropertyDelegate? childDelegate;

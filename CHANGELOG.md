@@ -1,3 +1,10 @@
+## 0.2.2
+### Added
+- Added shorthands
+- Added streams for lists and maps
+### Documentation
+- Updated README with new demos
+
 ## 0.2.1
 ### Documentation
 - Updated README with new demos showcasing functionality

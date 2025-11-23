@@ -5,6 +5,7 @@ import 'package:llm_json_stream/classes/property_delegates/map_property_delegate
 import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
 import 'package:llm_json_stream/classes/property_stream.dart';
 import 'package:llm_json_stream/classes/property_stream_controller.dart';
+import 'package:llm_json_stream/mixins/property_getter_mixin.dart';
 
 /// A streaming JSON parser optimized for LLM responses.
 ///
@@ -44,13 +45,13 @@ import 'package:llm_json_stream/classes/property_stream_controller.dart';
 /// - `'items[0].name'` - Array element property
 /// - `'data.users[2].profile.age'` - Deep nesting
 ///
-/// ## Disposal
+/// Disposal
 ///
 /// Call [dispose] when done to clean up resources:
 /// ```dart
 /// await parser.dispose();
 /// ```
-class JsonStreamParser {
+class JsonStreamParser with PropertyGetterMixin {
   /// Creates a new JSON stream parser that processes the given [stream].
   ///
   /// The parser immediately begins consuming the stream and parsing JSON
@@ -92,6 +93,7 @@ class JsonStreamParser {
   /// ```
   ///
   /// Throws [Exception] if the property at this path is not a string.
+  @override
   StringPropertyStream getStringProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! StringPropertyStreamController) {
@@ -122,6 +124,7 @@ class JsonStreamParser {
   /// ```
   ///
   /// Throws [Exception] if the property at this path is not a number.
+  @override
   NumberPropertyStream getNumberProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! NumberPropertyStreamController) {
@@ -152,6 +155,7 @@ class JsonStreamParser {
   /// ```
   ///
   /// Throws [Exception] if the property at this path is not a boolean.
+  @override
   BooleanPropertyStream getBooleanProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath]
@@ -183,6 +187,7 @@ class JsonStreamParser {
   /// ```
   ///
   /// Throws [Exception] if the property at this path is not null.
+  @override
   NullPropertyStream getNullProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! NullPropertyStreamController) {
@@ -214,6 +219,7 @@ class JsonStreamParser {
   /// ```
   ///
   /// Throws [Exception] if the property at this path is not a map.
+  @override
   MapPropertyStream getMapProperty(String propertyPath) {
     if (_propertyControllers[propertyPath] != null &&
         _propertyControllers[propertyPath] is! MapPropertyStreamController) {
@@ -255,6 +261,7 @@ class JsonStreamParser {
   /// ```
   ///
   /// Throws [Exception] if the property at this path is not a list.
+  @override
   ListPropertyStream<E> getListProperty<E extends Object?>(
     String propertyPath, {
     void Function(PropertyStream propertyStream, int index)? onElement,
@@ -369,10 +376,40 @@ class JsonStreamParser {
 
   PropertyStream _getPropertyStream(String propertyPath, Type streamType) {
     // If controller already exists (e.g., user called getXxxProperty before parsing),
-    // just return its property stream instead of trying to create a new one
+    // check if the type matches what we're trying to parse
     final existingController = _propertyControllers[propertyPath];
     if (existingController != null) {
-      return existingController.propertyStream;
+      // Verify type compatibility
+      final isCompatible = (streamType == String &&
+              existingController is StringPropertyStreamController) ||
+          (streamType == num &&
+              existingController is NumberPropertyStreamController) ||
+          (streamType == bool &&
+              existingController is BooleanPropertyStreamController) ||
+          (streamType == Null &&
+              existingController is NullPropertyStreamController) ||
+          (streamType == Map &&
+              existingController is MapPropertyStreamController) ||
+          (streamType == List &&
+              existingController is ListPropertyStreamController);
+
+      if (isCompatible) {
+        return existingController.propertyStream;
+      } else {
+        // Type mismatch - complete the existing controller with an error
+        // The existing controller is what the USER requested
+        // The streamType is what we FOUND in the JSON
+        final requestedTypeName = existingController.runtimeType
+            .toString()
+            .replaceAll('PropertyStreamController', '');
+        final foundTypeName = streamType.toString();
+        final error = Exception(
+            'Type mismatch at path "$propertyPath": requested $requestedTypeName but found $foundTypeName in JSON');
+        if (!existingController.completer.isCompleted) {
+          existingController.completer.completeError(error);
+        }
+        throw error;
+      }
     }
 
     // Otherwise create the appropriate controller based on type
@@ -394,41 +431,57 @@ class JsonStreamParser {
   }
 
   void _parseChunk(String chunk) {
-    for (final character in chunk.split('')) {
-      if (_rootDelegate != null) {
-        _rootDelegate!.addCharacter(character);
+    try {
+      for (final character in chunk.split('')) {
+        if (_rootDelegate != null) {
+          _rootDelegate!.addCharacter(character);
+          continue;
+        }
+
+        // Skip leading whitespace before the root element
+        if (character == ' ' ||
+            character == '\t' ||
+            character == '\n' ||
+            character == '\r') {
+          continue;
+        }
+
+        if (character == '{') {
+          _rootDelegate = MapPropertyDelegate(
+            propertyPath: '',
+            parserController: _controller,
+          );
+          _rootDelegate!.addCharacter(character);
+        }
+
+        if (character == "[") {
+          _rootDelegate = ListPropertyDelegate(
+            propertyPath: '',
+            parserController: _controller,
+          );
+          _rootDelegate!.addCharacter(character);
+        }
+
         continue;
       }
 
-      // Skip leading whitespace before the root element
-      if (character == ' ' ||
-          character == '\t' ||
-          character == '\n' ||
-          character == '\r') {
-        continue;
-      }
-
-      if (character == '{') {
-        _rootDelegate = MapPropertyDelegate(
-          propertyPath: '',
-          parserController: _controller,
-        );
-        _rootDelegate!.addCharacter(character);
-      }
-
-      if (character == "[") {
-        _rootDelegate = ListPropertyDelegate(
-          propertyPath: '',
-          parserController: _controller,
-        );
-        _rootDelegate!.addCharacter(character);
-      }
-
-      continue;
+      _rootDelegate?.onChunkEnd();
+    } catch (e) {
+      // Type mismatch or other parsing errors - already handled by completing
+      // the specific controller with an error, so we just stop parsing
+      return;
     }
-
-    _rootDelegate?.onChunkEnd();
   }
+
+  // PropertyGetterMixin implementation
+  @override
+  String buildPropertyPath(String key) {
+    // For root-level JsonStreamParser, just return the key directly
+    return key;
+  }
+
+  @override
+  JsonStreamParserController get parserController => _controller;
 
   /// Disposes the parser and cleans up all resources.
   ///

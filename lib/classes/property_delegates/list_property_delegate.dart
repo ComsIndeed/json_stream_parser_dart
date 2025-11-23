@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
+import 'package:llm_json_stream/classes/property_stream.dart';
 import 'package:llm_json_stream/classes/property_stream_controller.dart';
 
 class ListPropertyDelegate extends PropertyDelegate {
@@ -38,7 +41,22 @@ class ListPropertyDelegate extends PropertyDelegate {
   bool _isFirstCharacter = true;
   PropertyDelegate? _activeChildDelegate;
 
+  // The current list being built
+  List<dynamic> _currentList = [];
+  StreamSubscription? _childSubscription;
+
   String get _currentElementPath => '$propertyPath[$_index]';
+
+  void _emitUpdate() {
+    try {
+      final controller =
+          parserController.getPropertyStreamController(propertyPath)
+              as ListPropertyStreamController;
+      controller.addNew(List<dynamic>.from(_currentList));
+    } catch (_) {
+      // List controller doesn't exist - no one is listening
+    }
+  }
 
   void onChildComplete() {
     // State management now happens inline in addCharacter
@@ -47,8 +65,19 @@ class ListPropertyDelegate extends PropertyDelegate {
 
   @override
   void onChunkEnd() {
+    // Only call onChunkEnd on child if it's not done yet
     if (_activeChildDelegate != null && !_activeChildDelegate!.isDone) {
       _activeChildDelegate?.onChunkEnd();
+    }
+
+    // Only emit updates if someone is listening (i.e., if the list controller exists)
+    try {
+      final controller =
+          parserController.getPropertyStreamController(propertyPath)
+              as ListPropertyStreamController;
+      controller.addNew(List<dynamic>.from(_currentList));
+    } catch (_) {
+      // List controller doesn't exist - no one is listening, so skip emission
     }
   }
 
@@ -118,6 +147,39 @@ class ListPropertyDelegate extends PropertyDelegate {
           _currentElementPath,
           streamType,
         );
+
+        // Add placeholder to current list at this index
+        _currentList.add(null);
+        final currentIndex = _index;
+
+        // Cancel any previous subscription
+        _childSubscription?.cancel();
+        _childSubscription = null;
+
+        // Set up a subscription to update the list when the child emits values
+        // Only subscribe to types that can emit multiple events (String, Map, List)
+        if (elementStream is MapPropertyStream) {
+          _childSubscription = elementStream.stream.listen((value) {
+            _currentList[currentIndex] = value;
+            _emitUpdate();
+          });
+        } else if (elementStream is ListPropertyStream) {
+          _childSubscription = elementStream.stream.listen((value) {
+            _currentList[currentIndex] = value;
+            _emitUpdate();
+          });
+        } else if (elementStream is StringPropertyStream) {
+          _childSubscription = elementStream.stream.listen((value) {
+            if (_currentList[currentIndex] == null) {
+              _currentList[currentIndex] = value;
+            } else {
+              _currentList[currentIndex] = _currentList[currentIndex] + value;
+            }
+            _emitUpdate();
+          });
+        }
+        // Note: We don't subscribe to Number, Boolean, or Null streams
+        // because they only emit once and we get their value from the completer
 
         // Invoke onElement callbacks if anyone is listening (i.e., if the list controller exists)
         // Note: The list controller only exists if someone called getListProperty() on this path
