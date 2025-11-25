@@ -19,6 +19,13 @@ abstract class PropertyStream<T> {
   Future<T> get future => _future;
   final JsonStreamParserController _parserController;
 
+  MapPropertyStream get asMap => this as MapPropertyStream;
+  ListPropertyStream get asList => this as ListPropertyStream;
+  StringPropertyStream get asStr => this as StringPropertyStream;
+  NumberPropertyStream get asNum => this as NumberPropertyStream;
+  BooleanPropertyStream get asBool => this as BooleanPropertyStream;
+  NullPropertyStream get asNull => this as NullPropertyStream;
+
   PropertyStream({
     required Future<T> future,
     required JsonStreamParserController parserController,
