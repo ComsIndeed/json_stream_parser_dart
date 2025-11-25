@@ -1,3 +1,15 @@
+## 0.2.3
+### Changes
+- Removed `JsonStreamParserController` as an export
+- Add type casting getters for `PropertyStream` objects:
+  - `asString()`
+  - `asNum()`
+  - `asBool()`
+  - `asMap()`
+  - `asList()`
+### Documentation
+- Updated README
+
 ## 0.2.2
 ### Added
 - Added shorthands
