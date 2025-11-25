@@ -34,8 +34,7 @@
 library;
 
 // Core parser
-export 'classes/json_stream_parser.dart'
-    show JsonStreamParser, JsonStreamParserController;
+export 'classes/json_stream_parser.dart' show JsonStreamParser;
 
 // Property streams (public API)
 export 'classes/property_stream.dart'
