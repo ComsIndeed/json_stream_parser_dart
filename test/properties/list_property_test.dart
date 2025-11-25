@@ -524,13 +524,15 @@ void main() {
       final listProperty = parser.getListProperty(
         "products",
         onElement: (propertyStream, index) async {
-          if (verbose)
+          if (verbose) {
             print(
                 '[CALLBACK] onElement called for index $index, stream: ${propertyStream.runtimeType}');
+          }
           final mapPropertyStream = propertyStream as MapPropertyStream;
           final future = mapPropertyStream.future.then((value) {
-            if (verbose)
+            if (verbose) {
               print('[CALLBACK] Future resolved for index $index: $value');
+            }
             return value as Map<String, dynamic>;
           });
           itemFutures.add(future);
@@ -668,8 +670,9 @@ void main() {
       // At this point, onElement should have been called
       expect(capturedStream, isNotNull, reason: 'Stream should be captured');
 
-      if (verbose)
+      if (verbose) {
         print('[TEST] Checking if future resolves immediately to empty map...');
+      }
 
       // Try to get the future - it should NOT resolve yet
       final mapFuture = capturedStream!.future;
@@ -749,8 +752,9 @@ void main() {
 
       if (verbose) print('[TEST] Number of items: ${items.length}');
       for (var i = 0; i < items.length; i++) {
-        if (verbose)
+        if (verbose) {
           print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+        }
       }
 
       // This is where the bug should show up
@@ -774,8 +778,9 @@ void main() {
       // Create parser FIRST (Flutter app does this)
       final parser = JsonStreamParser(controller.stream);
 
-      if (verbose)
+      if (verbose) {
         print('[TEST] Parser created, waiting before setting up callback...');
+      }
 
       // Small delay to simulate setState() rebuild timing
       await Future.delayed(Duration(milliseconds: 10));
@@ -818,8 +823,9 @@ void main() {
 
       if (verbose) print('[TEST] Number of items: ${items.length}');
       for (var i = 0; i < items.length; i++) {
-        if (verbose)
+        if (verbose) {
           print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+        }
       }
 
       expect(items.length, equals(2), reason: 'Should have 2 items');
@@ -848,9 +854,10 @@ void main() {
           final mapPropertyStream = propertyStream as MapPropertyStream;
 
           mapPropertyStream.future.then((map) {
-            if (verbose)
+            if (verbose) {
               print(
                   '[THEN] Map resolved for index $index: $map (isEmpty: ${(map as Map).isEmpty})');
+            }
             items.add(map as Map<String, dynamic>);
           });
         },
@@ -871,8 +878,9 @@ void main() {
 
       if (verbose) print('[TEST] Number of items: ${items.length}');
       for (var i = 0; i < items.length; i++) {
-        if (verbose)
+        if (verbose) {
           print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+        }
       }
 
       expect(items.length, equals(2), reason: 'Should have 2 items');
@@ -912,9 +920,10 @@ void main() {
 
           // This is what the Flutter app does - call .then() immediately
           mapPropertyStream.future.then((map) {
-            if (verbose)
+            if (verbose) {
               print(
                   '[.then()] Map resolved for index $index: $map (isEmpty: ${(map as Map).isEmpty})');
+            }
             items.add(map as Map<String, dynamic>);
           });
 
@@ -934,8 +943,9 @@ void main() {
 
       if (verbose) print('[TEST] Number of items: ${items.length}');
       for (var i = 0; i < items.length; i++) {
-        if (verbose)
+        if (verbose) {
           print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+        }
       }
 
       // If this fails, the bug is in the PARSER
@@ -963,12 +973,14 @@ void main() {
           final mapPropertyStream = propertyStream as MapPropertyStream;
 
           // Try AWAITING instead of .then()
-          if (verbose)
+          if (verbose) {
             print('[onElement] About to await future for index $index...');
+          }
           final map = await mapPropertyStream.future;
-          if (verbose)
+          if (verbose) {
             print(
                 '[onElement] Got map for index $index: $map (isEmpty: ${map.isEmpty})');
+          }
           items.add(map as Map<String, dynamic>);
         },
       );
@@ -984,8 +996,9 @@ void main() {
 
       if (verbose) print('[TEST] Number of items: ${items.length}');
       for (var i = 0; i < items.length; i++) {
-        if (verbose)
+        if (verbose) {
           print('[TEST] Item $i: ${items[i]} (isEmpty: ${items[i].isEmpty})');
+        }
       }
 
       expect(items.length, equals(2));
@@ -1070,9 +1083,10 @@ void main() {
           // Add a listener to track when and what the future resolves to
           mapPropertyStream.future.then((value) {
             final map = value as Map<String, dynamic>;
-            if (verbose)
+            if (verbose) {
               print(
                   '[RESOLVED] Index $index resolved to: $map (isEmpty: ${map.isEmpty})');
+            }
             resolvedMaps.add(map);
 
             // Check if it's empty - this would be the bug!
@@ -1095,8 +1109,9 @@ void main() {
       // Wait a bit for futures to resolve
       await Future.delayed(Duration(milliseconds: 500));
 
-      if (verbose)
+      if (verbose) {
         print('[TEST] Number of resolved maps: ${resolvedMaps.length}');
+      }
 
       expect(resolvedMaps.length, equals(2));
       expect(resolvedMaps[0].isEmpty, isFalse,

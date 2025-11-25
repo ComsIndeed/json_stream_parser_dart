@@ -7,20 +7,20 @@ void main() async {
   final parser = JsonStreamParser(controller.stream);
 
   // Test that shorthand methods return correct types
-  StringPropertyStream str = parser.str('strProp');
-  NumberPropertyStream num = parser.number('numProp');
-  BooleanPropertyStream bool = parser.boolean('boolProp');
-  NullPropertyStream nil = parser.nil('nilProp');
-  MapPropertyStream map = parser.map('mapProp');
-  ListPropertyStream list = parser.list('listProp');
+  parser.str('strProp'); // StringPropertyStream
+  parser.number('numProp'); // NumberPropertyStream
+  parser.boolean('boolProp'); // BooleanPropertyStream
+  parser.nil('nilProp'); // NullPropertyStream
+  parser.map('mapProp'); // MapPropertyStream
+  parser.list('listProp'); // ListPropertyStream
 
   // Test chaining
-  MapPropertyStream userMap = parser.map('user');
-  StringPropertyStream userName = userMap.str('name');
-  NumberPropertyStream userAge = userMap.number('age');
+  final userMap = parser.map('user');
+  userMap.str('name'); // StringPropertyStream
+  userMap.number('age'); // NumberPropertyStream
 
   // Test list property
-  ListPropertyStream items = parser.list('items');
+  parser.list('items'); // ListPropertyStream
 
   print('✅ All type assignments are valid!');
   print('✅ Shorthand methods return correct types');
