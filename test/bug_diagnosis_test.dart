@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:llm_json_stream/json_stream_parser.dart';
+import 'package:llm_json_stream/llm_json_stream.dart';
 import 'package:test/test.dart';
 
 /// Detailed diagnostic test to understand the chunk=25 bug

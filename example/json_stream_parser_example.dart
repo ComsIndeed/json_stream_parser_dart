@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:llm_json_stream/json_stream_parser.dart';
+import 'package:llm_json_stream/llm_json_stream.dart';
 
 /// Example demonstrating how to use JsonStreamParser for parsing streaming JSON.
 ///
