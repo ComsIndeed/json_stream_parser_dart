@@ -1,3 +1,7 @@
+## 0.3.1
+### Documentation
+- Updated README import statements to use `llm_json_stream` package name
+
 ## 0.3.0
 ### Fixes:
 - Fixed return types for getter methods
