@@ -65,11 +65,11 @@ Instead of waiting for the entire JSON response to complete, you can:
 ```yaml
 # pubspec.yaml
 dependencies:
-  llm_json_stream: ^0.2.3
+  llm_json_stream: ^0.3.0
 ```
 
 ```dart
-import 'package:llm_json_stream/json_stream_parser.dart';
+import 'package:llm_json_stream/llm_json_stream.dart';
 
 final parser = JsonStreamParser(llmResponseStream);
 
@@ -201,7 +201,7 @@ Available: `.asMap`, `.asList`, `.asStr`, `.asNum`, `.asBool`, `.asNull`
 A realistic scenario: parsing a blog post with streaming title and reactive sections.
 
 ```dart
-import 'package:llm_json_stream/json_stream_parser.dart';
+import 'package:llm_json_stream/llm_json_stream.dart';
 
 void main() async {
   // Your LLM stream (OpenAI, Claude, Gemini, etc.)

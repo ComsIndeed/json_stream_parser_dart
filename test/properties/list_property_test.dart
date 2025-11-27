@@ -260,12 +260,9 @@ void main() {
       if (verbose) print('[GOT LIST] data: $data');
 
       // Chain to access specific indices
-      final firstStream =
-          dataStream.getNumberProperty("[0]") as NumberPropertyStream;
-      final secondStream =
-          dataStream.getNumberProperty("[1]") as NumberPropertyStream;
-      final thirdStream =
-          dataStream.getNumberProperty("[2]") as NumberPropertyStream;
+      final firstStream = dataStream.getNumberProperty("[0]");
+      final secondStream = dataStream.getNumberProperty("[1]");
+      final thirdStream = dataStream.getNumberProperty("[2]");
 
       final first = await firstStream.future.withTestTimeout();
       final second = await secondStream.future.withTestTimeout();
@@ -1222,5 +1219,3 @@ void main() {
     });
   });
 }
-
-

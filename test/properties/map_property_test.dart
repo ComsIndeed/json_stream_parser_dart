@@ -224,10 +224,8 @@ void main() {
       if (verbose) print('[GOT MAP] user: $userMap');
 
       // Now chain to get properties from that map
-      final nameStream =
-          userMapStream.getStringProperty("name") as StringPropertyStream;
-      final emailStream =
-          userMapStream.getStringProperty("email") as StringPropertyStream;
+      final nameStream = userMapStream.getStringProperty("name");
+      final emailStream = userMapStream.getStringProperty("email");
 
       final name = await nameStream.future.withTestTimeout();
       final email = await emailStream.future.withTestTimeout();
@@ -507,5 +505,3 @@ void main() {
     });
   });
 }
-
-

@@ -110,9 +110,9 @@ Future<void> listShorthandExample() async {
   items.onElement((element, index) {
     if (element is MapPropertyStream) {
       // Use shorthand methods on the map elements
-      final name = element.str('name') as StringPropertyStream;
-      final price = element.number('price') as NumberPropertyStream;
-      final available = element.boolean('available') as BooleanPropertyStream;
+      final name = element.str('name');
+      final price = element.number('price');
+      final available = element.boolean('available');
 
       // Collect the data
       Future.wait<Object?>([name.future, price.future, available.future])
