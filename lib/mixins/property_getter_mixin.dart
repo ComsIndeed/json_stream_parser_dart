@@ -1,4 +1,5 @@
 import 'package:llm_json_stream/classes/json_stream_parser.dart';
+import 'package:llm_json_stream/json_stream_parser.dart';
 
 /// Mixin that provides property getter methods for accessing nested JSON properties.
 ///
@@ -31,9 +32,10 @@ mixin PropertyGetterMixin {
   /// final titleStream = parser.getStringProperty('title');
   /// titleStream.stream.listen((chunk) => print('Chunk: $chunk'));
   /// ```
-  dynamic getStringProperty(String key) {
+  StringPropertyStream getStringProperty(String key) {
     final fullPath = buildPropertyPath(key);
-    return parserController.getPropertyStream(fullPath, String);
+    return parserController.getPropertyStream(fullPath, String)
+        as StringPropertyStream;
   }
 
   /// Shorthand alias for [getStringProperty].
@@ -49,13 +51,14 @@ mixin PropertyGetterMixin {
   /// ```dart
   /// final isActive = await parser.getBooleanProperty('active').future;
   /// ```
-  dynamic getBooleanProperty(String key) {
+  BooleanPropertyStream getBooleanProperty(String key) {
     final fullPath = buildPropertyPath(key);
-    return parserController.getPropertyStream(fullPath, bool);
+    return parserController.getPropertyStream(fullPath, bool)
+        as BooleanPropertyStream;
   }
 
   /// Shorthand alias for [getBooleanProperty].
-  dynamic boolean(String key) => getBooleanProperty(key);
+  BooleanPropertyStream boolean(String key) => getBooleanProperty(key);
 
   /// Gets a stream for a number property at the specified [key].
   ///
@@ -67,13 +70,14 @@ mixin PropertyGetterMixin {
   /// ```dart
   /// final age = await parser.getNumberProperty('age').future;
   /// ```
-  dynamic getNumberProperty(String key) {
+  NumberPropertyStream getNumberProperty(String key) {
     final fullPath = buildPropertyPath(key);
-    return parserController.getPropertyStream(fullPath, num);
+    return parserController.getPropertyStream(fullPath, num)
+        as NumberPropertyStream;
   }
 
   /// Shorthand alias for [getNumberProperty].
-  dynamic number(String key) => getNumberProperty(key);
+  NumberPropertyStream number(String key) => getNumberProperty(key);
 
   /// Gets a stream for a null property at the specified [key].
   ///
@@ -85,14 +89,15 @@ mixin PropertyGetterMixin {
   /// ```dart
   /// await parser.getNullProperty('optionalField').future;
   /// ```
-  dynamic getNullProperty(String key) {
+  NullPropertyStream getNullProperty(String key) {
     final fullPath = buildPropertyPath(key);
-    return parserController.getPropertyStream(fullPath, Null);
+    return parserController.getPropertyStream(fullPath, Null)
+        as NullPropertyStream;
   }
 
   /// Shorthand alias for [getNullProperty].
   // Note: Can't use `null` as a method name, so we use `nil` instead
-  dynamic nil(String key) => getNullProperty(key);
+  NullPropertyStream nil(String key) => getNullProperty(key);
 
   /// Gets a stream for a map (object) property at the specified [key].
   ///
@@ -105,13 +110,14 @@ mixin PropertyGetterMixin {
   /// final userMap = parser.getMapProperty('user');
   /// final name = userMap.getStringProperty('name');
   /// ```
-  dynamic getMapProperty(String key) {
+  MapPropertyStream getMapProperty(String key) {
     final fullPath = buildPropertyPath(key);
-    return parserController.getPropertyStream(fullPath, Map);
+    return parserController.getPropertyStream(fullPath, Map)
+        as MapPropertyStream;
   }
 
   /// Shorthand alias for [getMapProperty].
-  dynamic map(String key) => getMapProperty(key);
+  MapPropertyStream map(String key) => getMapProperty(key);
 
   /// Gets a stream for a list (array) property at the specified [key].
   ///
@@ -129,26 +135,27 @@ mixin PropertyGetterMixin {
   ///   print('New item at index $index');
   /// });
   /// ```
-  dynamic getListProperty<E extends Object?>(
+  ListPropertyStream<E> getListProperty<E extends Object?>(
     String key, {
-    void Function(dynamic propertyStream, int index)? onElement,
+    void Function(PropertyStream propertyStream, int index)? onElement,
   }) {
     final fullPath = buildPropertyPath(key);
 
-    final listStream = parserController.getPropertyStream(fullPath, List);
+    final listStream = parserController.getPropertyStream(fullPath, List)
+        as ListPropertyStream<E>;
 
     if (onElement != null) {
       // Call onElement on the returned stream
-      (listStream as dynamic).onElement(onElement);
+      listStream.onElement(onElement);
     }
 
     return listStream;
   }
 
   /// Shorthand alias for [getListProperty].
-  dynamic list<E extends Object?>(
+  ListPropertyStream<E> list<E extends Object?>(
     String key, {
-    void Function(dynamic propertyStream, int index)? onElement,
+    void Function(PropertyStream propertyStream, int index)? onElement,
   }) =>
       getListProperty<E>(key, onElement: onElement);
 }
