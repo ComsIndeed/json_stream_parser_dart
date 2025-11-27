@@ -1,3 +1,9 @@
+## 0.3.0
+### Fixes:
+- Fixed return types for getter methods
+- Fixed exports
+- Moved all files into `src/` folder for better package structure
+
 ## 0.2.3
 ### Changes
 - Removed `JsonStreamParserController` as an export
