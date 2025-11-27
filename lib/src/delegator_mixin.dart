@@ -1,11 +1,11 @@
-import 'package:llm_json_stream/classes/json_stream_parser.dart';
-import 'package:llm_json_stream/classes/property_delegates/boolean_property_delegate.dart';
-import 'package:llm_json_stream/classes/property_delegates/list_property_delegate.dart';
-import 'package:llm_json_stream/classes/property_delegates/map_property_delegate.dart';
-import 'package:llm_json_stream/classes/property_delegates/null_property_delegate.dart';
-import 'package:llm_json_stream/classes/property_delegates/number_property_delegate.dart';
-import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
-import 'package:llm_json_stream/classes/property_delegates/string_property_delegate.dart';
+import 'json_stream_parser.dart';
+import 'property_delegate.dart';
+import 'boolean_property_delegate.dart';
+import 'list_property_delegate.dart';
+import 'map_property_delegate.dart';
+import 'null_property_delegate.dart';
+import 'number_property_delegate.dart';
+import 'string_property_delegate.dart';
 
 mixin Delegator {
   PropertyDelegate createDelegate(
@@ -74,7 +74,3 @@ mixin Delegator {
     }
   }
 }
-
-/// ! You left off trying to determine what would be the interface for the map stream properties and such, so that you could emit values from the delegates
-///
-/// You did really well again, goodjob!

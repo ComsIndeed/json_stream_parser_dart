@@ -1,4 +1,4 @@
-import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
+import 'property_delegate.dart';
 
 class NumberPropertyDelegate extends PropertyDelegate {
   final StringBuffer _buffer = StringBuffer();
@@ -57,5 +57,10 @@ class NumberPropertyDelegate extends PropertyDelegate {
 
     _buffer.clear(); // Clear buffer to prevent re-use
     // Note: addPropertyChunk already completes the controller, so we don't need to call complete again
+  }
+
+  @override
+  void onChunkEnd() {
+    // Numbers don't emit partial chunks like strings do
   }
 }

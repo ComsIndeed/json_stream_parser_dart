@@ -1,4 +1,4 @@
-import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
+import 'property_delegate.dart';
 
 class NullPropertyDelegate extends PropertyDelegate {
   NullPropertyDelegate({

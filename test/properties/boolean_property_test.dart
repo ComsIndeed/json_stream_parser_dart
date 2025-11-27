@@ -1,6 +1,5 @@
-import 'package:llm_json_stream/classes/json_stream_parser.dart';
+import 'package:llm_json_stream/json_stream_parser.dart';
 import 'package:test/test.dart';
-import 'package:llm_json_stream/utilities/stream_text_in_chunks.dart';
 
 /// Enable verbose logging to debug test execution
 const bool verbose = false;
@@ -144,3 +143,5 @@ void main() {
     });
   });
 }
+
+

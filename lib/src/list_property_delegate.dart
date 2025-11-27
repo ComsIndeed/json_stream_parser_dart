@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
-import 'package:llm_json_stream/classes/property_stream.dart';
-import 'package:llm_json_stream/classes/property_stream_controller.dart';
+import 'property_delegate.dart';
+import 'property_stream.dart';
+import 'property_stream_controller.dart';
 
 class ListPropertyDelegate extends PropertyDelegate {
   ListPropertyDelegate({

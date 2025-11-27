@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_final_fields
 
-import 'package:llm_json_stream/classes/json_stream_parser.dart';
-import 'package:llm_json_stream/classes/mixins.dart';
+import 'json_stream_parser.dart';
+import 'delegator_mixin.dart';
 
 ///
 /// WORKERS THAT NAVIGATE DIFFERENT TOKENS
@@ -31,17 +31,6 @@ abstract class PropertyDelegate with Delegator {
       propertyPath.isEmpty ? path : '$propertyPath.$path';
 
   void addPropertyChunk<T>(T value, {String? innerPath}) {
-    // throw UnimplementedError();
-
-    ///
-    /// ! THIS IS WHERE YOU LEFT OFF
-    ///
-    /// YOU HAVE TO FIX THIS METHOD SO THAT STREAMING WORKS
-    ///
-    /// YOU NEED TO FIGURE OUT HOW TO "ADD" OR "EMIT" VALUES TO [PROPERTYSTREAMS]
-    /// DO REMEMBER THERE ARE DIFFERENT TYPES WITH DIFFERENT EMISSION REQUIREMENTS AND DIFFERENT PUBLIC APIS
-    ///
-
     parserController.addPropertyChunk<T>(
       chunk: value,
       propertyPath: innerPath ?? propertyPath,

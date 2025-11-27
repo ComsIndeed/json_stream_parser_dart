@@ -1,7 +1,6 @@
 
-import 'package:llm_json_stream/classes/json_stream_parser.dart';
+import 'package:llm_json_stream/json_stream_parser.dart';
 import 'package:test/test.dart';
-import 'package:llm_json_stream/utilities/stream_text_in_chunks.dart';
 
 /// Comprehensive test suite for LLM robustness features
 ///
@@ -914,3 +913,5 @@ Result: ```json
     });
   });
 }
+
+

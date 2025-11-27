@@ -2,15 +2,11 @@
 
 import 'dart:async';
 
-import 'package:llm_json_stream/classes/property_delegates/property_delegate.dart';
-import 'package:llm_json_stream/classes/property_stream_controller.dart';
-import 'package:llm_json_stream/json_stream_parser.dart';
+import 'property_delegate.dart';
+import 'property_stream_controller.dart';
+import 'property_stream.dart';
 
 class MapPropertyDelegate extends PropertyDelegate {
-  // * String propertyPath
-
-  // * JsonStreamParserController jsonStreamParserController
-
   MapPropertyDelegate({
     required super.propertyPath,
     required super.parserController,
@@ -64,11 +60,6 @@ class MapPropertyDelegate extends PropertyDelegate {
 
   @override
   void addCharacter(String character) {
-    // Debug logging disabled to reduce noise
-    // print(
-    //   'MAP[$propertyPath] State: $_state | Char: |$character| | KeyBuffer: |$_keyBuffer| | ChildDone: ${_activeChildDelegate?.isDone}',
-    // );
-
     if (_state == MapParserState.readingKey) {
       if (character == '"') {
         _state = MapParserState.waitingForValue;

@@ -1,5 +1,5 @@
-import 'package:llm_json_stream/classes/json_stream_parser.dart';
-import 'package:llm_json_stream/json_stream_parser.dart';
+import 'property_stream.dart';
+import 'json_stream_parser.dart';
 
 /// Mixin that provides property getter methods for accessing nested JSON properties.
 ///

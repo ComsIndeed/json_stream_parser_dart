@@ -34,10 +34,10 @@
 library;
 
 // Core parser
-export 'classes/json_stream_parser.dart' show JsonStreamParser;
+export 'src/json_stream_parser.dart' show JsonStreamParser;
 
 // Property streams (public API)
-export 'classes/property_stream.dart'
+export 'src/property_stream.dart'
     show
         PropertyStream,
         StringPropertyStream,
@@ -47,5 +47,5 @@ export 'classes/property_stream.dart'
         MapPropertyStream,
         ListPropertyStream;
 
-// Utility exports (if users need to test with simulated streams)
-export 'utilities/stream_text_in_chunks.dart' show streamTextInChunks;
+// Utility for testing with simulated streams
+export 'src/stream_text_in_chunks.dart' show streamTextInChunks;

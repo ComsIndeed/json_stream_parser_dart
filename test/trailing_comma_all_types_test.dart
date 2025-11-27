@@ -1,7 +1,6 @@
 
-import 'package:llm_json_stream/classes/json_stream_parser.dart';
+import 'package:llm_json_stream/json_stream_parser.dart';
 import 'package:test/test.dart';
-import 'package:llm_json_stream/utilities/stream_text_in_chunks.dart';
 
 /// Comprehensive tests for trailing commas with all value types
 ///
@@ -555,3 +554,5 @@ void main() {
     });
   });
 }
+
+

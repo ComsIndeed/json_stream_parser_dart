@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:llm_json_stream/classes/json_stream_parser.dart';
-import 'package:llm_json_stream/classes/property_stream_controller.dart';
-import 'package:llm_json_stream/mixins/property_getter_mixin.dart';
+import 'json_stream_parser.dart';
+import 'property_stream_controller.dart';
+import 'property_getter_mixin.dart';
 
 /// Base class for all property streams.
 ///
