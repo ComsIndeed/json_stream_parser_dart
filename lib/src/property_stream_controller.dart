@@ -41,6 +41,17 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
     }
   }
 
+  Stream<String> get liveStream => streamController.stream;
+
+  Stream<String> createReplayableStream() async* {
+    if (_buffer.isNotEmpty) {
+      yield _buffer;
+    }
+    if (!_isClosed) {
+      yield* streamController.stream;
+    }
+  }
+
   final streamController = StreamController<String>.broadcast();
 
   @override
@@ -59,7 +70,8 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
     required super.propertyPath,
   }) {
     propertyStream = StringPropertyStream(
-      stream: streamController.stream,
+      liveStream: liveStream,
+      replayableStreamFactory: createReplayableStream,
       future: completer.future,
       parserController: parserController,
     );
@@ -73,9 +85,25 @@ class MapPropertyStreamController
 
   final streamController = StreamController<Map<String, dynamic>>.broadcast();
 
+  List<Map<String, dynamic>> _buffer = [];
+
   void addNew(Map<String, dynamic> map) {
     if (!_isClosed) {
+      _buffer.add(map);
       streamController.add(map);
+    }
+  }
+
+  Stream<Map<String, dynamic>> get liveStream => streamController.stream;
+
+  Stream<Map<String, dynamic>> createReplayableStream() async* {
+    // Take a snapshot of the buffer at subscription time
+    final bufferSnapshot = List<Map<String, dynamic>>.from(_buffer);
+    for (final item in bufferSnapshot) {
+      yield item;
+    }
+    if (!_isClosed) {
+      yield* streamController.stream;
     }
   }
 
@@ -93,7 +121,8 @@ class MapPropertyStreamController
       future: completer.future,
       parserController: parserController,
       propertyPath: propertyPath,
-      stream: streamController.stream,
+      liveStream: liveStream,
+      replayableStreamFactory: createReplayableStream,
     );
   }
 }
@@ -106,9 +135,25 @@ class ListPropertyStreamController<T extends Object?>
 
   final streamController = StreamController<List<T>>.broadcast();
 
+  List<List<T>> _buffer = [];
+
   void addNew(List<T> list) {
     if (!_isClosed) {
+      _buffer.add(list);
       streamController.add(list);
+    }
+  }
+
+  Stream<List<T>> get liveStream => streamController.stream;
+
+  Stream<List<T>> createReplayableStream() async* {
+    // Take a snapshot of the buffer at subscription time
+    final bufferSnapshot = List<List<T>>.from(_buffer);
+    for (final item in bufferSnapshot) {
+      yield item;
+    }
+    if (!_isClosed) {
+      yield* streamController.stream;
     }
   }
 
@@ -126,7 +171,8 @@ class ListPropertyStreamController<T extends Object?>
       future: completer.future,
       parserController: parserController,
       propertyPath: propertyPath,
-      stream: streamController.stream,
+      liveStream: liveStream,
+      replayableStreamFactory: createReplayableStream,
     );
   }
 

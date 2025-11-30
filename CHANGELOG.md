@@ -1,3 +1,27 @@
+## 0.4.0
+### Added
+- **Buffered streams for Maps and Lists**: Both `MapPropertyStream` and `ListPropertyStream` now support buffered (replayable) streams, matching `StringPropertyStream` behavior
+  - `.stream` (default, recommended): Replays all previously emitted values to new subscribers, preventing race conditions when subscribing late
+  - `.unbufferedStream`: Direct access to the live stream without replay, for cases where you need the original behavior or are migrating existing code
+
+### Changed
+- `MapPropertyStream.stream` now returns a replayable stream that buffers past emissions
+- `ListPropertyStream.stream` now returns a replayable stream that buffers past emissions
+- Internal refactoring: Stream controllers now use factory pattern for creating replayable streams
+
+### Migration
+If you were relying on the previous behavior where `.stream` didn't replay values:
+```dart
+// Before (0.3.x): .stream was unbuffered
+mapStream.stream.listen(...);
+
+// After (0.4.0): Use .unbufferedStream for the same behavior
+mapStream.unbufferedStream.listen(...);
+
+// Or use .stream (recommended) for buffered/replayable behavior
+mapStream.stream.listen(...);  // Will receive past values
+```
+
 ## 0.3.1
 ### Documentation
 - Updated README import statements to use `llm_json_stream` package name

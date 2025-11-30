@@ -23,7 +23,13 @@ Parse JSON reactively as LLM responses stream in. Subscribe to properties and re
 - [The Solution](#the-solution)
 - [Quick Start](#quick-start)
 - [How It Works](#how-it-works)
-- [Features](#features)
+- [Feature Highlights](#feature-highlights)
+  - [Streaming Strings](#-streaming-strings)
+  - [Reactive Lists](#-reactive-lists)
+  - [All JSON Types](#-all-json-types)
+  - [Flexible API](#️-flexible-api)
+  - [Smart Casts](#-smart-casts)
+  - [Buffered vs Unbuffered Streams](#-buffered-vs-unbuffered-streams)
 - [Complete Example](#complete-example)
 - [API Reference](#api-reference)
 - [Robustness](#robustness)
@@ -65,7 +71,7 @@ Instead of waiting for the entire JSON response to complete, you can:
 ```yaml
 # pubspec.yaml
 dependencies:
-  llm_json_stream: ^0.3.0
+  llm_json_stream: ^0.4.0
 ```
 
 ```dart
@@ -194,6 +200,33 @@ parser.getListProperty('items').onElement((element, index) {
 
 Available: `.asMap`, `.asList`, `.asStr`, `.asNum`, `.asBool`, `.asNull`
 
+### 🔄 Buffered vs Unbuffered Streams
+
+All property streams offer two stream modes to handle different subscription timing scenarios:
+
+```dart
+final items = parser.getListProperty('items');
+
+// Recommended: Buffered stream (replays past values to new subscribers)
+items.stream.listen((list) {
+  // Will receive ALL previously emitted values, then continue with live updates
+  // Safe for late subscriptions - no race conditions!
+});
+
+// Alternative: Unbuffered stream (live only, no replay)
+items.unbufferedStream.listen((list) {
+  // Only receives values emitted AFTER subscription
+  // Use for migration or when you explicitly want live-only behavior
+});
+```
+
+| Stream Type | Behavior | Use Case |
+|-------------|----------|----------|
+| `.stream` | Replays buffered values, then live | **Recommended** — prevents race conditions |
+| `.unbufferedStream` | Live values only, no replay | Migration, memory-sensitive scenarios |
+
+This applies to `StringPropertyStream`, `MapPropertyStream`, and `ListPropertyStream`.
+
 ---
 
 ## Complete Example
@@ -253,8 +286,9 @@ void main() async {
 ### PropertyStream Interface
 
 ```dart
-.stream   // Stream<T> — values/chunks as they arrive
-.future   // Future<T> — completes with final value
+.stream           // Stream<T> — buffered, replays past values to new subscribers
+.unbufferedStream // Stream<T> — live only, no replay (available on String, Map, List)
+.future           // Future<T> — completes with final value
 ```
 
 ### ListPropertyStream
