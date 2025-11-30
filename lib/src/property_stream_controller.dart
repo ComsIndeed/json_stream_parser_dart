@@ -102,7 +102,8 @@ class MapPropertyStreamController
 
   final streamController = StreamController<Map<String, dynamic>>.broadcast();
 
-  List<Map<String, dynamic>> _buffer = [];
+  /// Only stores the LATEST map state, not history (O(1) memory)
+  Map<String, dynamic>? _lastValue;
 
   /// Callbacks registered for onProperty events
   List<void Function(PropertyStream, String)> onPropertyCallbacks = [];
@@ -116,7 +117,7 @@ class MapPropertyStreamController
 
   void addNew(Map<String, dynamic> map) {
     if (!_isClosed) {
-      _buffer.add(map);
+      _lastValue = map;
       streamController.add(map);
     }
   }
@@ -124,10 +125,9 @@ class MapPropertyStreamController
   Stream<Map<String, dynamic>> get liveStream => streamController.stream;
 
   Stream<Map<String, dynamic>> createReplayableStream() async* {
-    // Take a snapshot of the buffer at subscription time
-    final bufferSnapshot = List<Map<String, dynamic>>.from(_buffer);
-    for (final item in bufferSnapshot) {
-      yield item;
+    // Emit the latest value to new subscribers (BehaviorSubject style)
+    if (_lastValue != null) {
+      yield _lastValue!;
     }
     if (!_isClosed) {
       yield* streamController.stream;
@@ -162,11 +162,12 @@ class ListPropertyStreamController<T extends Object?>
 
   final streamController = StreamController<List<T>>.broadcast();
 
-  List<List<T>> _buffer = [];
+  /// Only stores the LATEST list state, not history (O(1) memory)
+  List<T>? _lastValue;
 
   void addNew(List<T> list) {
     if (!_isClosed) {
-      _buffer.add(list);
+      _lastValue = list;
       streamController.add(list);
     }
   }
@@ -174,10 +175,9 @@ class ListPropertyStreamController<T extends Object?>
   Stream<List<T>> get liveStream => streamController.stream;
 
   Stream<List<T>> createReplayableStream() async* {
-    // Take a snapshot of the buffer at subscription time
-    final bufferSnapshot = List<List<T>>.from(_buffer);
-    for (final item in bufferSnapshot) {
-      yield item;
+    // Emit the latest value to new subscribers (BehaviorSubject style)
+    if (_lastValue != null) {
+      yield _lastValue!;
     }
     if (!_isClosed) {
       yield* streamController.stream;

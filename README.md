@@ -5,7 +5,7 @@
 **The streaming JSON parser for AI applications**
 
 [![pub package](https://img.shields.io/pub/v/llm_json_stream.svg)](https://pub.dev/packages/llm_json_stream)
-[![Tests](https://img.shields.io/badge/tests-500%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-504%20passing-brightgreen)]()
 [![Dart](https://img.shields.io/badge/dart-%3E%3D3.0.0-blue)]()
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](LICENSE)
 
@@ -225,28 +225,30 @@ Available: `.asMap`, `.asList`, `.asStr`, `.asNum`, `.asBool`, `.asNull`
 
 ### 🔄 Buffered vs Unbuffered Streams
 
-All property streams offer two stream modes to handle different subscription timing scenarios:
+Property streams offer two modes to handle different subscription timing scenarios:
 
 ```dart
 final items = parser.getListProperty('items');
 
-// Recommended: Buffered stream (replays past values to new subscribers)
+// Recommended: Buffered stream (replays latest value to new subscribers)
 items.stream.listen((list) {
-  // Will receive ALL previously emitted values, then continue with live updates
+  // Will receive the LATEST state immediately, then continue with live updates
   // Safe for late subscriptions - no race conditions!
 });
 
 // Alternative: Unbuffered stream (live only, no replay)
 items.unbufferedStream.listen((list) {
   // Only receives values emitted AFTER subscription
-  // Use for migration or when you explicitly want live-only behavior
+  // Use when you explicitly want live-only behavior
 });
 ```
 
 | Stream Type | Behavior | Use Case |
 |-------------|----------|----------|
-| `.stream` | Replays buffered values, then live | **Recommended** — prevents race conditions |
-| `.unbufferedStream` | Live values only, no replay | Migration, memory-sensitive scenarios |
+| `.stream` | Replays latest value, then live | **Recommended** — prevents race conditions |
+| `.unbufferedStream` | Live values only, no replay | When you need live-only behavior |
+
+**Memory efficient**: Maps and Lists only buffer the latest state (O(1) memory), not the full history. Strings buffer chunks for accumulation.
 
 This applies to `StringPropertyStream`, `MapPropertyStream`, and `ListPropertyStream`.
 
@@ -416,7 +418,7 @@ JsonStreamParser(
 
 ## Robustness
 
-Battle-tested with **500 tests**. Handles real-world edge cases:
+Battle-tested with **504 tests**. Handles real-world edge cases:
 
 | Category | What's Covered |
 |----------|----------------|

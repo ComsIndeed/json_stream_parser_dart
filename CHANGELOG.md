@@ -1,8 +1,9 @@
 ## 0.4.0
 ### Added
 - **Buffered streams for Maps and Lists**: Both `MapPropertyStream` and `ListPropertyStream` now support buffered (replayable) streams, matching `StringPropertyStream` behavior
-  - `.stream` (default, recommended): Replays all previously emitted values to new subscribers, preventing race conditions when subscribing late
-  - `.unbufferedStream`: Direct access to the live stream without replay, for cases where you need the original behavior or are migrating existing code
+  - `.stream` (default, recommended): Replays the latest value to new subscribers (BehaviorSubject-style), preventing race conditions when subscribing late
+  - `.unbufferedStream`: Direct access to the live stream without replay, for cases where you need live-only behavior
+  - **Memory efficient**: Only stores the latest state (O(1) memory), not the full history of emissions
 
 - **`onProperty` callback for Maps**: Similar to `onElement` for lists, maps now support an `onProperty` callback that fires when each property starts parsing
   ```dart
@@ -28,12 +29,13 @@
   - Property-specific logging via `.onLog()` method on any `PropertyStream`
 
 ### Changed
-- `MapPropertyStream.stream` now returns a replayable stream that buffers past emissions
-- `ListPropertyStream.stream` now returns a replayable stream that buffers past emissions
-- Internal refactoring: Stream controllers now use factory pattern for creating replayable streams
+- `MapPropertyStream.stream` now returns a replayable stream that emits the latest state to new subscribers
+- `ListPropertyStream.stream` now returns a replayable stream that emits the latest state to new subscribers
+- **Breaking**: Buffered streams now emit only the latest value (BehaviorSubject-style) instead of full history replay. This prevents O(N²) memory usage on large streams.
 
 ### Fixed
 - Fixed timing issue where `dispose()` was called before async completers finished, causing "Parser was disposed before property completed" errors
+- Fixed memory leak where Map and List buffers stored every intermediate state (now stores only latest)
 
 ### Migration
 If you were relying on the previous behavior where `.stream` didn't replay values:
@@ -45,7 +47,7 @@ mapStream.stream.listen(...);
 mapStream.unbufferedStream.listen(...);
 
 // Or use .stream (recommended) for buffered/replayable behavior
-mapStream.stream.listen(...);  // Will receive past values
+mapStream.stream.listen(...);  // Will receive latest state immediately
 ```
 
 ## 0.3.1
