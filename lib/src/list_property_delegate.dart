@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'parse_event.dart';
 import 'property_delegate.dart';
 import 'property_stream.dart';
 import 'property_stream_controller.dart';
@@ -46,6 +47,20 @@ class ListPropertyDelegate extends PropertyDelegate {
   StreamSubscription? _childSubscription;
 
   String get _currentElementPath => '$propertyPath[$_index]';
+
+  void _emitLog(ParseEvent event) {
+    // Emit to the parser's global log
+    parserController.emitLog(event);
+
+    // Also emit to any property-specific log callbacks
+    try {
+      final controller =
+          parserController.getPropertyStreamController(propertyPath);
+      controller.emitLog(event);
+    } catch (_) {
+      // Controller doesn't exist yet
+    }
+  }
 
   void _emitUpdate() {
     try {
@@ -143,6 +158,23 @@ class ListPropertyDelegate extends PropertyDelegate {
         } else {
           streamType = num;
         }
+
+        // Emit listElementStart event
+        _emitLog(ParseEvent(
+          type: ParseEventType.listElementStart,
+          propertyPath: propertyPath,
+          message: 'List element started at index $_index',
+          data: _index,
+        ));
+
+        // Emit propertyStart for the element
+        _emitLog(ParseEvent(
+          type: ParseEventType.propertyStart,
+          propertyPath: _currentElementPath,
+          message:
+              'Started parsing list element: $_currentElementPath (type: $streamType)',
+        ));
+
         final elementStream = parserController.getPropertyStream(
           _currentElementPath,
           streamType,
@@ -239,6 +271,14 @@ class ListPropertyDelegate extends PropertyDelegate {
         );
         final value = await controller.completer.future;
         elements.add(value);
+
+        // Emit propertyComplete for each element
+        _emitLog(ParseEvent(
+          type: ParseEventType.propertyComplete,
+          propertyPath: elementPath,
+          message: 'List element completed: $elementPath',
+          data: value,
+        ));
       } catch (e) {
         // Controller doesn't exist - this shouldn't happen in normal operation
         // but we'll handle it gracefully
@@ -252,6 +292,14 @@ class ListPropertyDelegate extends PropertyDelegate {
         propertyPath,
       );
       listController.complete(elements);
+
+      // Emit propertyComplete for the list itself
+      _emitLog(ParseEvent(
+        type: ParseEventType.propertyComplete,
+        propertyPath: propertyPath,
+        message: 'List completed: $propertyPath',
+        data: elements,
+      ));
     } catch (e) {
       // If there's no list controller, it means no one subscribed to this list
       // This is fine - we just won't complete anything

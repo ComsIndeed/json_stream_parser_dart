@@ -1,4 +1,6 @@
+import 'parse_event.dart';
 import 'property_delegate.dart';
+import 'property_stream_controller.dart';
 
 class StringPropertyDelegate extends PropertyDelegate {
   StringPropertyDelegate({
@@ -11,9 +13,32 @@ class StringPropertyDelegate extends PropertyDelegate {
   bool _isEscaping = false;
   bool _firstCharacter = true;
 
+  void _emitLog(ParseEvent event) {
+    // Emit to the parser's global log
+    parserController.emitLog(event);
+
+    // Also emit to any property-specific log callbacks
+    try {
+      final controller =
+          parserController.getPropertyStreamController(propertyPath);
+      controller.emitLog(event);
+    } catch (_) {
+      // Controller doesn't exist yet
+    }
+  }
+
   @override
   void onChunkEnd() {
     if (_buffer.isEmpty || isDone) return;
+
+    // Emit stringChunk event
+    _emitLog(ParseEvent(
+      type: ParseEventType.stringChunk,
+      propertyPath: propertyPath,
+      message: 'String chunk: ${_buffer.length} chars',
+      data: _buffer,
+    ));
+
     addPropertyChunk(_buffer);
     _buffer = "";
   }
@@ -72,14 +97,29 @@ class StringPropertyDelegate extends PropertyDelegate {
       isDone = true;
       // Emit final chunk if there's any remaining buffer
       if (_buffer.isNotEmpty) {
+        // Emit stringChunk event for the final chunk
+        _emitLog(ParseEvent(
+          type: ParseEventType.stringChunk,
+          propertyPath: propertyPath,
+          message: 'String chunk: ${_buffer.length} chars',
+          data: _buffer,
+        ));
+
         addPropertyChunk(_buffer);
         _buffer = "";
       }
       // Complete the string controller - it will use its accumulated buffer
       final controller = parserController.getPropertyStreamController(
         propertyPath,
-      );
+      ) as StringPropertyStreamController;
       if (!controller.isClosed) {
+        // Emit propertyComplete event
+        _emitLog(ParseEvent(
+          type: ParseEventType.propertyComplete,
+          propertyPath: propertyPath,
+          message: 'String property completed: $propertyPath',
+        ));
+
         controller.complete(
           "",
         ); // The actual value comes from the controller's _buffer

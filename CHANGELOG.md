@@ -4,10 +4,36 @@
   - `.stream` (default, recommended): Replays all previously emitted values to new subscribers, preventing race conditions when subscribing late
   - `.unbufferedStream`: Direct access to the live stream without replay, for cases where you need the original behavior or are migrating existing code
 
+- **`onProperty` callback for Maps**: Similar to `onElement` for lists, maps now support an `onProperty` callback that fires when each property starts parsing
+  ```dart
+  parser.getMapProperty('user').onProperty((property, key) {
+    print('Property "$key" started parsing');
+    // Subscribe to property value as it streams
+  });
+  ```
+
+- **Yap Filter (`closeOnRootComplete`)**: New parser option to stop parsing after the root JSON object/array completes, ignoring any trailing text from the LLM
+  ```dart
+  final parser = JsonStreamParser(stream, closeOnRootComplete: true);
+  // Stops after root JSON, ignores: "Hope this helps!"
+  ```
+
+- **Observability with `ParseEvent`**: Monitor parsing events in real-time with the `onLog` callback
+  ```dart
+  final parser = JsonStreamParser(stream, onLog: (event) {
+    print('[${event.type}] ${event.message}');
+  });
+  ```
+  - Event types: `rootStart`, `mapKeyDiscovered`, `listElementStart`, `propertyStart`, `propertyComplete`, `stringChunk`, `yapFiltered`
+  - Property-specific logging via `.onLog()` method on any `PropertyStream`
+
 ### Changed
 - `MapPropertyStream.stream` now returns a replayable stream that buffers past emissions
 - `ListPropertyStream.stream` now returns a replayable stream that buffers past emissions
 - Internal refactoring: Stream controllers now use factory pattern for creating replayable streams
+
+### Fixed
+- Fixed timing issue where `dispose()` was called before async completers finished, causing "Parser was disposed before property completed" errors
 
 ### Migration
 If you were relying on the previous behavior where `.stream` didn't replay values:

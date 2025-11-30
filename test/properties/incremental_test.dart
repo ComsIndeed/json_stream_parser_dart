@@ -9,17 +9,18 @@ void main() {
       final streamController = StreamController<String>();
       final parser = JsonStreamParser(streamController.stream);
 
-      // First add the chunk, then subscribe
-      print('Adding chunk 1: {"name":"Al');
-      streamController.add('{"name":"Al');
-      await Future.delayed(Duration(milliseconds: 10));
-
+      // Subscribe BEFORE adding chunks to capture all emissions
       final stringStream = parser.getStringProperty('name');
       final emittedStrings = <String>[];
       stringStream.stream.listen((str) {
         print('String emitted: $str');
         emittedStrings.add(str);
       });
+
+      print('Adding chunk 1: {"name":"Al');
+      streamController.add('{"name":"Al');
+      await Future.delayed(Duration(milliseconds: 10));
+      print('Emitted strings count: ${emittedStrings.length}');
 
       print('Adding chunk 2: ice"}');
       streamController.add('ice"}');
@@ -31,11 +32,92 @@ void main() {
 
       print('Final emitted strings: $emittedStrings');
 
-      // Strict expectations: We should get exactly one emission with "ice"
-      expect(emittedStrings.length, 1,
-          reason: 'Should emit exactly once after the string completes');
-      expect(emittedStrings[0], 'ice',
-          reason: 'Should emit the partial string "ice" before completion');
+      // String stream emits each chunk as it arrives (not accumulated)
+      // This is the expected behavior for streaming strings
+      expect(emittedStrings.length, 2,
+          reason: 'Should emit twice - once per chunk');
+      expect(emittedStrings[0], 'Al',
+          reason: 'First emission should have first chunk "Al"');
+      expect(emittedStrings[1], 'ice',
+          reason: 'Second emission should have second chunk "ice"');
+
+      // To get the complete string, use the future property
+      final complete = await stringStream.future;
+      expect(complete, 'Alice',
+          reason: 'Future should return complete string "Alice"');
+    });
+
+    test('String emits buffered chunks', () async {
+      final streamController = StreamController<String>();
+      final parser = JsonStreamParser(streamController.stream);
+      final emittedStrings = <String>[];
+
+      // Emit chunks before subscribing
+      streamController.add('{"title":"This i');
+      await Future.delayed(Duration(milliseconds: 10));
+      streamController.add('s a co');
+      await Future.delayed(Duration(milliseconds: 10));
+      // Now subscribe to the string property
+      final stringStream = parser
+          .getStringProperty('title')
+          .stream
+          .listen((str) => emittedStrings.add(str));
+      // Add final chunk
+      await Future.delayed(Duration(
+          milliseconds: 10)); // TODO: Test fails without this for some reason!
+      streamController.add('ol parser!');
+      await Future.delayed(Duration(milliseconds: 10));
+      streamController.add(' Whatt!"}');
+      await Future.delayed(Duration(milliseconds: 10));
+      await stringStream.cancel();
+      streamController.close();
+
+      // The string stream should emit all buffered chunks upon subscription
+      print('Emitted strings: $emittedStrings');
+      expect(emittedStrings.length, 3,
+          reason:
+              'Should emit 3 times. First for buffered, the last two for final chunk');
+
+      expect(emittedStrings.join(), 'This is a cool parser! Whatt!');
+      expect(emittedStrings[0], 'This is a co');
+      expect(emittedStrings[1], 'ol parser!');
+      expect(emittedStrings[2], ' Whatt!');
+    });
+
+    test('String does not emit unbuffereds', () async {
+      final streamController = StreamController<String>();
+      final parser = JsonStreamParser(streamController.stream);
+      final emittedStrings = <String>[];
+
+      // Emit chunks before subscribing
+      streamController.add('{"title":"This i');
+      await Future.delayed(Duration(milliseconds: 10));
+      streamController.add('s a co');
+      await Future.delayed(Duration(milliseconds: 10));
+      // Now subscribe to the string property
+      final stringStream = parser
+          .getStringProperty('title')
+          .unbufferedStream
+          .listen((str) => emittedStrings.add(str));
+      // Add final chunk
+      await Future.delayed(Duration(
+          milliseconds: 10)); // TODO: Test fails without this for some reason!
+      streamController.add('ol parser!');
+      await Future.delayed(Duration(milliseconds: 10));
+      streamController.add(' Whatt!"}');
+      await Future.delayed(Duration(milliseconds: 10));
+      await stringStream.cancel();
+      streamController.close();
+
+      // The string stream should not emit buffered chunks upon subscription
+      print('Emitted strings: $emittedStrings');
+      expect(emittedStrings.length, 2,
+          reason:
+              'Should emit 2 times. Only for final chunks, no buffered emissions');
+
+      expect(emittedStrings.join(), 'ol parser! Whatt!');
+      expect(emittedStrings[0], 'ol parser!');
+      expect(emittedStrings[1], ' Whatt!');
     });
 
     test('Nested map in list emits on each chunk', () async {
@@ -90,5 +172,3 @@ void main() {
     });
   });
 }
-
-

@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'parse_event.dart';
 import 'property_delegate.dart';
 import 'property_stream_controller.dart';
 import 'property_stream.dart';
@@ -25,6 +26,20 @@ class MapPropertyDelegate extends PropertyDelegate {
   // The current map being built
   Map<String, dynamic> _currentMap = {};
   StreamSubscription? _childSubscription;
+
+  void _emitLog(ParseEvent event) {
+    // Emit to the parser's global log
+    parserController.emitLog(event);
+
+    // Also emit to any property-specific log callbacks
+    try {
+      final controller =
+          parserController.getPropertyStreamController(propertyPath);
+      controller.emitLog(event);
+    } catch (_) {
+      // Controller doesn't exist yet
+    }
+  }
 
   void _emitUpdate() {
     try {
@@ -97,6 +112,14 @@ class MapPropertyDelegate extends PropertyDelegate {
       // Add this key to our list of keys
       _keys.add(_keyBuffer);
 
+      // Emit mapKeyDiscovered event
+      _emitLog(ParseEvent(
+        type: ParseEventType.mapKeyDiscovered,
+        propertyPath: propertyPath,
+        message: 'Discovered key: $_keyBuffer',
+        data: _keyBuffer,
+      ));
+
       _childSubscription?.cancel();
       _childSubscription = null;
 
@@ -117,6 +140,14 @@ class MapPropertyDelegate extends PropertyDelegate {
       } else {
         streamType = num;
       }
+
+      // Emit propertyStart event for the child property
+      _emitLog(ParseEvent(
+        type: ParseEventType.propertyStart,
+        propertyPath: childPath,
+        message: 'Started parsing property: $childPath (type: $streamType)',
+      ));
+
       final propertyStream =
           parserController.getPropertyStream(childPath, streamType);
       _currentMap[_keyBuffer] = null;
@@ -146,6 +177,20 @@ class MapPropertyDelegate extends PropertyDelegate {
       }
       // Note: We don't subscribe to Number, Boolean, or Null streams
       // because they only emit once and we get their value from the completer
+
+      // Invoke onProperty callbacks if anyone is listening (i.e., if the map controller exists)
+      // Note: The map controller only exists if someone called getMapProperty() on this path
+      try {
+        final mapController =
+            parserController.getPropertyStreamController(propertyPath)
+                as MapPropertyStreamController;
+
+        for (final callback in mapController.onPropertyCallbacks) {
+          callback(propertyStream, currentKey);
+        }
+      } catch (_) {
+        // Map controller doesn't exist - no one is listening to onProperty, so skip
+      }
 
       // THEN: Create child delegate with a closure that checks if it's still active
       PropertyDelegate? childDelegate;
@@ -223,6 +268,14 @@ class MapPropertyDelegate extends PropertyDelegate {
         );
         final value = await controller.completer.future;
         map[key] = value;
+
+        // Emit propertyComplete for each child
+        _emitLog(ParseEvent(
+          type: ParseEventType.propertyComplete,
+          propertyPath: childPath,
+          message: 'Property completed: $childPath',
+          data: value,
+        ));
       } catch (e) {
         // Controller doesn't exist - this shouldn't happen in normal operation
         // but we'll handle it gracefully
@@ -236,6 +289,14 @@ class MapPropertyDelegate extends PropertyDelegate {
         propertyPath,
       );
       mapController.complete(map);
+
+      // Emit propertyComplete for the map itself
+      _emitLog(ParseEvent(
+        type: ParseEventType.propertyComplete,
+        propertyPath: propertyPath,
+        message: 'Map completed: $propertyPath',
+        data: map,
+      ));
     } catch (e) {
       // If there's no map controller, it means no one subscribed to this map
       // This is fine - we just won't complete anything

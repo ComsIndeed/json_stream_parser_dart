@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'json_stream_parser.dart';
+import 'parse_event.dart';
 import 'property_stream.dart';
 
 abstract class PropertyStreamController<T> {
@@ -16,6 +17,21 @@ abstract class PropertyStreamController<T> {
   });
   final JsonStreamParserController parserController;
   final String propertyPath;
+
+  /// Callbacks registered for logging on this specific property
+  final List<void Function(ParseEvent)> _onLogCallbacks = [];
+
+  /// Adds a log callback for this property stream.
+  void addOnLogCallback(void Function(ParseEvent) callback) {
+    _onLogCallbacks.add(callback);
+  }
+
+  /// Emits a log event to registered callbacks for this property.
+  void emitLog(ParseEvent event) {
+    for (final callback in _onLogCallbacks) {
+      callback(event);
+    }
+  }
 
   void onClose() {
     _isClosed = true;
@@ -74,6 +90,7 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
       replayableStreamFactory: createReplayableStream,
       future: completer.future,
       parserController: parserController,
+      propertyPath: propertyPath,
     );
   }
 }
@@ -86,6 +103,16 @@ class MapPropertyStreamController
   final streamController = StreamController<Map<String, dynamic>>.broadcast();
 
   List<Map<String, dynamic>> _buffer = [];
+
+  /// Callbacks registered for onProperty events
+  List<void Function(PropertyStream, String)> onPropertyCallbacks = [];
+
+  /// Adds a callback that fires when a new property starts parsing.
+  void addOnPropertyCallback(
+    void Function(PropertyStream propertyStream, String key) callback,
+  ) {
+    onPropertyCallbacks.add(callback);
+  }
 
   void addNew(Map<String, dynamic> map) {
     if (!_isClosed) {
@@ -204,6 +231,7 @@ class NumberPropertyStreamController extends PropertyStreamController<num> {
       parserController: parserController,
       future: completer.future,
       stream: streamController.stream,
+      propertyPath: propertyPath,
     );
   }
 
@@ -232,6 +260,7 @@ class BooleanPropertyStreamController extends PropertyStreamController<bool> {
       parserController: parserController,
       future: completer.future,
       stream: streamController.stream,
+      propertyPath: propertyPath,
     );
   }
 
@@ -261,6 +290,7 @@ class NullPropertyStreamController extends PropertyStreamController<Null> {
       parserController: parserController,
       future: completer.future,
       stream: streamController.stream,
+      propertyPath: propertyPath,
     );
   }
 

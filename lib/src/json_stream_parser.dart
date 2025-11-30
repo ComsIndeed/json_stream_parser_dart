@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'list_property_delegate.dart';
 import 'map_property_delegate.dart';
+import 'parse_event.dart';
 import 'property_delegate.dart';
 import 'property_stream.dart';
 import 'property_stream_controller.dart';
@@ -21,6 +22,8 @@ import 'property_getter_mixin.dart';
 /// - **Path-based subscriptions**: Access nested properties with dot notation or chainable API
 /// - **Type safety**: Typed property streams for all JSON types
 /// - **Dynamic list handling**: React to array elements as soon as they start arriving
+/// - **Yap filter**: Automatically stops parsing after root JSON object completes
+/// - **Observability**: Optional logging callbacks for debugging and monitoring
 ///
 /// ## Basic Usage
 ///
@@ -57,17 +60,67 @@ class JsonStreamParser with PropertyGetterMixin {
   /// The parser immediately begins consuming the stream and parsing JSON
   /// character-by-character.
   ///
+  /// If [closeOnRootComplete] is true (the default), the parser will
+  /// automatically stop parsing and dispose itself when the root JSON object
+  /// or array is fully parsed. This prevents issues with LLMs that add
+  /// extra text after the JSON (the "yap" problem).
+  ///
+  /// If [onLog] is provided, it will be called with [ParseEvent] objects
+  /// for various parsing events, useful for debugging and monitoring.
+  ///
   /// Example:
   /// ```dart
   /// final parser = JsonStreamParser(myLLMResponseStream);
   /// ```
-  JsonStreamParser(Stream<String> stream) : _stream = stream {
-    _streamSubscription = _stream.listen(_parseChunk);
+  JsonStreamParser(
+    Stream<String> stream, {
+    this.closeOnRootComplete = true,
+    void Function(ParseEvent)? onLog,
+  })  : _stream = stream,
+        _onLog = onLog {
+    _streamSubscription = _stream.listen(
+      (chunk) {
+        try {
+          _parseChunk(chunk);
+        } catch (e) {
+          // This outer catch should prevent exceptions from escaping to the zone
+          // The inner catch in _parseChunk should handle most cases, but this is a safety net
+        }
+      },
+      onError: (error, stackTrace) {
+        _emitLog(ParseEvent(
+          type: ParseEventType.error,
+          propertyPath: '',
+          message: 'Stream error: $error',
+          data: error,
+        ));
+      },
+    );
     _controller = JsonStreamParserController(
       addPropertyChunk: _addPropertyChunk,
       getPropertyStreamController: _getControllerForPath,
       getPropertyStream: _getPropertyStream,
+      emitLog: _emitLog,
     );
+  }
+
+  /// Whether to automatically stop parsing when the root JSON object completes.
+  ///
+  /// When true (default), the parser will dispose itself after the root
+  /// object or array closes, ignoring any trailing text. This is useful
+  /// for handling LLM responses that may include explanatory text after
+  /// the JSON.
+  ///
+  /// When false, the parser continues listening to the stream until
+  /// explicitly disposed or the stream closes.
+  final bool closeOnRootComplete;
+
+  /// The logging callback for this parser.
+  void Function(ParseEvent)? _onLog;
+
+  /// Emits a log event to all registered listeners.
+  void _emitLog(ParseEvent event) {
+    _onLog?.call(event);
   }
 
   /// Gets a stream for a string property at the specified [propertyPath].
@@ -405,9 +458,22 @@ class JsonStreamParser with PropertyGetterMixin {
         final foundTypeName = streamType.toString();
         final error = Exception(
             'Type mismatch at path "$propertyPath": requested $requestedTypeName but found $foundTypeName in JSON');
+
+        // Emit error log event
+        _emitLog(ParseEvent(
+          type: ParseEventType.error,
+          propertyPath: propertyPath,
+          message:
+              'Type mismatch: requested $requestedTypeName but found $foundTypeName',
+          data: error,
+        ));
+
         if (!existingController.completer.isCompleted) {
           existingController.completer.completeError(error);
         }
+
+        // Return null or throw - for now we throw so the parser stops processing this property
+        // But we rethrow so the catch in _parseChunk can handle it gracefully
         throw error;
       }
     }
@@ -431,8 +497,38 @@ class JsonStreamParser with PropertyGetterMixin {
   }
 
   void _parseChunk(String chunk) {
+    // Check if we should stop parsing (yap filter)
+    if (_isDisposed) return;
+    if (closeOnRootComplete && _rootDelegate != null && _rootDelegate!.isDone) {
+      // Root object is complete, stop parsing - yap filter triggered
+      _emitLog(ParseEvent(
+        type: ParseEventType.yapFiltered,
+        propertyPath: '',
+        message: 'Yap filter triggered - ignoring text after root JSON',
+      ));
+      // Just cancel the stream subscription to stop parsing more input
+      // Don't call dispose() here as that would error out pending completers
+      _streamSubscription.cancel();
+      return;
+    }
+
     try {
       for (final character in chunk.split('')) {
+        // Check again inside the loop in case root completes mid-chunk
+        if (closeOnRootComplete &&
+            _rootDelegate != null &&
+            _rootDelegate!.isDone) {
+          _emitLog(ParseEvent(
+            type: ParseEventType.yapFiltered,
+            propertyPath: '',
+            message: 'Yap filter triggered - ignoring text after root JSON',
+          ));
+          // Just cancel the stream subscription to stop parsing more input
+          // Don't call dispose() here as that would error out pending completers
+          _streamSubscription.cancel();
+          return;
+        }
+
         if (_rootDelegate != null) {
           _rootDelegate!.addCharacter(character);
           continue;
@@ -447,6 +543,11 @@ class JsonStreamParser with PropertyGetterMixin {
         }
 
         if (character == '{') {
+          _emitLog(ParseEvent(
+            type: ParseEventType.rootStart,
+            propertyPath: '',
+            message: 'Started parsing root object',
+          ));
           _rootDelegate = MapPropertyDelegate(
             propertyPath: '',
             parserController: _controller,
@@ -455,6 +556,11 @@ class JsonStreamParser with PropertyGetterMixin {
         }
 
         if (character == "[") {
+          _emitLog(ParseEvent(
+            type: ParseEventType.rootStart,
+            propertyPath: '',
+            message: 'Started parsing root array',
+          ));
           _rootDelegate = ListPropertyDelegate(
             propertyPath: '',
             parserController: _controller,
@@ -466,7 +572,28 @@ class JsonStreamParser with PropertyGetterMixin {
       }
 
       _rootDelegate?.onChunkEnd();
+
+      // Final check after processing the chunk
+      if (closeOnRootComplete &&
+          _rootDelegate != null &&
+          _rootDelegate!.isDone) {
+        _emitLog(ParseEvent(
+          type: ParseEventType.yapFiltered,
+          propertyPath: '',
+          message: 'Yap filter triggered - root JSON complete',
+        ));
+        // Just cancel the stream subscription to stop parsing more input
+        // Don't call dispose() here as that would error out pending completers
+        // The completers will finish asynchronously
+        _streamSubscription.cancel();
+      }
     } catch (e) {
+      _emitLog(ParseEvent(
+        type: ParseEventType.error,
+        propertyPath: '',
+        message: 'Parsing error: $e',
+        data: e,
+      ));
       // Type mismatch or other parsing errors - already handled by completing
       // the specific controller with an error, so we just stop parsing
       return;
@@ -498,6 +625,22 @@ class JsonStreamParser with PropertyGetterMixin {
     }
 
     _isDisposed = true;
+
+    // Emit rootComplete if root was parsed
+    if (_rootDelegate != null && _rootDelegate!.isDone) {
+      _emitLog(ParseEvent(
+        type: ParseEventType.rootComplete,
+        propertyPath: '',
+        message: 'Root JSON object/array completed parsing',
+      ));
+    }
+
+    // Emit disposed event
+    _emitLog(ParseEvent(
+      type: ParseEventType.disposed,
+      propertyPath: '',
+      message: 'Parser disposed',
+    ));
 
     // Cancel the stream subscription
     await _streamSubscription.cancel();
@@ -566,6 +709,7 @@ class JsonStreamParserController {
     required this.addPropertyChunk,
     required this.getPropertyStreamController,
     required this.getPropertyStream,
+    required this.emitLog,
   });
 
   final void Function<T>({required String propertyPath, required T chunk})
@@ -578,4 +722,7 @@ class JsonStreamParserController {
   /// The type parameter indicates what kind of stream to create.
   final PropertyStream Function(String propertyPath, Type streamType)
       getPropertyStream;
+
+  /// Emits a log event to the parser's log callback.
+  final void Function(ParseEvent event) emitLog;
 }

@@ -47,5 +47,8 @@ export 'src/property_stream.dart'
         MapPropertyStream,
         ListPropertyStream;
 
+// Logging/observability
+export 'src/parse_event.dart' show ParseEvent, ParseEventType;
+
 // Utility for testing with simulated streams
 export 'src/stream_text_in_chunks.dart' show streamTextInChunks;

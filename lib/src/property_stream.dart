@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'json_stream_parser.dart';
+import 'parse_event.dart';
 import 'property_stream_controller.dart';
 import 'property_getter_mixin.dart';
 
@@ -19,6 +20,9 @@ abstract class PropertyStream<T> {
   Future<T> get future => _future;
   final JsonStreamParserController _parserController;
 
+  /// The property path for this stream, used for logging.
+  String get _propertyPath;
+
   MapPropertyStream get asMap => this as MapPropertyStream;
   ListPropertyStream get asList => this as ListPropertyStream;
   StringPropertyStream get asStr => this as StringPropertyStream;
@@ -31,6 +35,27 @@ abstract class PropertyStream<T> {
     required JsonStreamParserController parserController,
   })  : _future = future,
         _parserController = parserController;
+
+  /// Registers a callback to receive log events for this property and its descendants.
+  ///
+  /// The callback will receive [ParseEvent] objects for parsing events that
+  /// occur at this property path or any nested paths.
+  ///
+  /// Example:
+  /// ```dart
+  /// parser.getMapProperty('user').onLog((event) {
+  ///   print('User parsing: ${event.type} - ${event.message}');
+  /// });
+  /// ```
+  void onLog(void Function(ParseEvent event) callback) {
+    try {
+      final controller =
+          _parserController.getPropertyStreamController(_propertyPath);
+      controller.addOnLogCallback(callback);
+    } catch (_) {
+      // Controller doesn't exist yet - this is fine
+    }
+  }
 }
 
 /// A property stream for JSON string values.
@@ -51,12 +76,17 @@ abstract class PropertyStream<T> {
 /// final fullTitle = await titleStream.future;
 /// ```
 class StringPropertyStream extends PropertyStream<String> {
+  @override
+  final String _propertyPath;
+
   StringPropertyStream({
     required super.future,
     required Stream<String> liveStream,
     required Stream<String> Function() replayableStreamFactory,
     required super.parserController,
-  })  : _liveStream = liveStream,
+    required String propertyPath,
+  })  : _propertyPath = propertyPath,
+        _liveStream = liveStream,
         _replayableStreamFactory = replayableStreamFactory;
 
   final Stream<String> _liveStream;
@@ -86,11 +116,16 @@ class StringPropertyStream extends PropertyStream<String> {
 /// Provides a [future] that completes with the parsed number value.
 /// Numbers are atomic values, so the stream emits once when complete.
 class NumberPropertyStream extends PropertyStream<num> {
+  @override
+  final String _propertyPath;
+
   NumberPropertyStream({
     required super.future,
     required Stream<num> stream,
     required super.parserController,
-  }) : _stream = stream;
+    required String propertyPath,
+  })  : _propertyPath = propertyPath,
+        _stream = stream;
 
   final Stream<num> _stream;
 
@@ -103,11 +138,16 @@ class NumberPropertyStream extends PropertyStream<num> {
 /// Provides a [future] that completes with null when the null value
 /// is fully parsed.
 class NullPropertyStream extends PropertyStream<Null> {
+  @override
+  final String _propertyPath;
+
   NullPropertyStream({
     required super.future,
     required Stream<Null> stream,
     required super.parserController,
-  }) : _stream = stream;
+    required String propertyPath,
+  })  : _propertyPath = propertyPath,
+        _stream = stream;
 
   final Stream<Null> _stream;
 
@@ -119,11 +159,16 @@ class NullPropertyStream extends PropertyStream<Null> {
 ///
 /// Provides a [future] that completes with the parsed boolean value.
 class BooleanPropertyStream extends PropertyStream<bool> {
+  @override
+  final String _propertyPath;
+
   BooleanPropertyStream({
     required super.future,
     required Stream<bool> stream,
     required super.parserController,
-  }) : _stream = stream;
+    required String propertyPath,
+  })  : _propertyPath = propertyPath,
+        _stream = stream;
 
   final Stream<bool> _stream;
 
@@ -152,6 +197,7 @@ class BooleanPropertyStream extends PropertyStream<bool> {
 /// ```
 class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>>
     with PropertyGetterMixin {
+  @override
   final String _propertyPath;
   final Stream<List<T>> _liveStream;
   final Stream<List<T>> Function() _replayableStreamFactory;
@@ -232,16 +278,22 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>>
 /// - A [future] that completes with the full parsed map
 /// - A [stream] that replays buffered values and then emits new values (recommended)
 /// - An [unbufferedStream] that only emits new values without replay
+/// - An [onProperty] callback for reacting to properties as they start parsing
 /// - Chainable property getters to access nested properties
 ///
-/// Use the chainable API to access nested properties:
+/// The [onProperty] callback enables "arm the trap" behavior, firing immediately
+/// when a new object property is discovered (before it's fully parsed):
+///
 /// ```dart
-/// final userMap = parser.getMapProperty('user');
-/// final name = userMap.getStringProperty('name');
-/// final age = userMap.getNumberProperty('age');
+/// final user = parser.getMapProperty('user');
+/// user.onProperty((property, key) {
+///   print('Property "$key" started');
+///   // Set up subscriptions for this property
+/// });
 /// ```
 class MapPropertyStream extends PropertyStream<Map<String, Object?>>
     with PropertyGetterMixin {
+  @override
   final String _propertyPath;
   final Stream<Map<String, dynamic>> _liveStream;
   final Stream<Map<String, dynamic>> Function() _replayableStreamFactory;
@@ -272,6 +324,37 @@ class MapPropertyStream extends PropertyStream<Map<String, Object?>>
   })  : _propertyPath = propertyPath,
         _liveStream = liveStream,
         _replayableStreamFactory = replayableStreamFactory;
+
+  /// Registers a callback that fires when each object property starts parsing.
+  ///
+  /// The [callback] receives:
+  /// - `propertyStream`: A property stream for the new property (type depends on value)
+  /// - `key`: The string key of the property in the object
+  ///
+  /// This fires immediately when the parser encounters the start of a new
+  /// property value, before the value is fully parsed. This enables building
+  /// reactive UIs that can add placeholder elements and fill them in as
+  /// data arrives.
+  ///
+  /// Example:
+  /// ```dart
+  /// user.onProperty((property, key) {
+  ///   if (property is StringPropertyStream) {
+  ///     property.stream.listen((chunk) {
+  ///       print('Property "$key" chunk: $chunk');
+  ///     });
+  ///   }
+  /// });
+  /// ```
+  void onProperty(
+    void Function(PropertyStream propertyStream, String key) callback,
+  ) {
+    // Add callback to the controller's list
+    final controller =
+        parserController.getPropertyStreamController(_propertyPath)
+            as MapPropertyStreamController;
+    controller.addOnPropertyCallback(callback);
+  }
 
   @override
   String buildPropertyPath(String key) {

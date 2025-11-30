@@ -5,7 +5,7 @@
 **The streaming JSON parser for AI applications**
 
 [![pub package](https://img.shields.io/pub/v/llm_json_stream.svg)](https://pub.dev/packages/llm_json_stream)
-[![Tests](https://img.shields.io/badge/tests-338%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-500%20passing-brightgreen)]()
 [![Dart](https://img.shields.io/badge/dart-%3E%3D3.0.0-blue)]()
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](LICENSE)
 
@@ -26,10 +26,13 @@ Parse JSON reactively as LLM responses stream in. Subscribe to properties and re
 - [Feature Highlights](#feature-highlights)
   - [Streaming Strings](#-streaming-strings)
   - [Reactive Lists](#-reactive-lists)
+  - [Reactive Maps](#-reactive-maps)
   - [All JSON Types](#-all-json-types)
   - [Flexible API](#️-flexible-api)
   - [Smart Casts](#-smart-casts)
   - [Buffered vs Unbuffered Streams](#-buffered-vs-unbuffered-streams)
+  - [Yap Filter](#-yap-filter-closeOnRootComplete)
+  - [Observability](#-observability)
 - [Complete Example](#complete-example)
 - [API Reference](#api-reference)
 - [Robustness](#robustness)
@@ -159,6 +162,26 @@ parser.getListProperty('articles').onElement((article, index) {
 **Traditional parsers** wait for complete objects → jarring UI jumps.  
 **This approach** → smooth loading states that populate progressively.
 
+### 🗺️ Reactive Maps
+
+Similar to lists, maps support an `onProperty` callback that fires when each property starts parsing:
+
+```dart
+parser.getMapProperty('user').onProperty((property, key) {
+  // Fires IMMEDIATELY when a property key is discovered
+  print('Property "$key" started parsing');
+  
+  // Subscribe to the property value as it streams
+  if (property is StringPropertyStream) {
+    property.stream.listen((chunk) {
+      setState(() => userFields[key] = (userFields[key] ?? '') + chunk);
+    });
+  }
+});
+```
+
+This enables building reactive forms or detail views that populate field-by-field as data arrives.
+
 ### 🎯 All JSON Types
 
 ```dart
@@ -226,6 +249,64 @@ items.unbufferedStream.listen((list) {
 | `.unbufferedStream` | Live values only, no replay | Migration, memory-sensitive scenarios |
 
 This applies to `StringPropertyStream`, `MapPropertyStream`, and `ListPropertyStream`.
+
+### 🛑 Yap Filter (closeOnRootComplete)
+
+Some LLMs "yap" after the JSON—adding explanatory text that can confuse downstream processing. The `closeOnRootComplete` option stops parsing the moment the root JSON object/array is complete:
+
+```dart
+final parser = JsonStreamParser(
+  llmStream,
+  closeOnRootComplete: true,  // Stop after root JSON completes
+);
+
+// Input: '{"data": 123} Hope this helps! Let me know if you need anything else.'
+// Parser stops after '}' — the trailing text is ignored
+```
+
+This is especially useful when:
+- Your LLM tends to add conversational text after JSON
+- You want to minimize processing overhead
+- You're building a pipeline where only the JSON matters
+
+### 📊 Observability
+
+Monitor parsing events in real-time with the `onLog` callback. Useful for debugging, analytics, or building parsing visualizers:
+
+```dart
+final parser = JsonStreamParser(
+  llmStream,
+  onLog: (event) {
+    print('[${event.type}] ${event.propertyPath}: ${event.message}');
+  },
+);
+
+// Output:
+// [rootStart] : Started parsing root object
+// [mapKeyDiscovered] : Discovered key: name
+// [propertyStart] name: Started parsing property: name (type: String)
+// [stringChunk] name: Received string chunk
+// [propertyComplete] name: Property completed: name
+// [propertyComplete] : Map completed:
+```
+
+Available event types:
+- `rootStart` — Root object/array parsing began
+- `mapKeyDiscovered` — A new key was found in an object
+- `listElementStart` — A new element was found in an array
+- `propertyStart` — Property value parsing began
+- `propertyComplete` — Property value parsing completed
+- `stringChunk` — String chunk received
+- `yapFiltered` — Parsing stopped due to yap filter
+
+You can also attach log listeners to specific properties:
+
+```dart
+parser.getMapProperty('user').onLog((event) {
+  // Only receives events for 'user' and its descendants
+  print('User event: ${event.type}');
+});
+```
 
 ---
 
@@ -297,6 +378,12 @@ void main() async {
 .onElement((element, index) => ...)  // Callback when element parsing starts
 ```
 
+### MapPropertyStream
+
+```dart
+.onProperty((property, key) => ...)  // Callback when property parsing starts
+```
+
 ### Smart Casts
 
 ```dart
@@ -315,11 +402,21 @@ Always dispose the parser when you're done:
 await parser.dispose();
 ```
 
+### Constructor Options
+
+```dart
+JsonStreamParser(
+  Stream<String> stream, {
+  bool closeOnRootComplete = false,  // Stop parsing after root JSON completes
+  void Function(ParseEvent)? onLog,  // Global log callback for all events
+});
+```
+
 ---
 
 ## Robustness
 
-Battle-tested with **338 tests**. Handles real-world edge cases:
+Battle-tested with **500 tests**. Handles real-world edge cases:
 
 | Category | What's Covered |
 |----------|----------------|
