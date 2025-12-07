@@ -5,7 +5,6 @@ import 'parse_event.dart';
 import 'property_stream_controller.dart';
 import 'property_getter_mixin.dart';
 
-/// {@category Property Streams}
 /// Base class for all property streams.
 ///
 /// Property streams provide access to JSON values as they are parsed from
@@ -74,7 +73,6 @@ abstract class PropertyStream<T> {
   }
 }
 
-/// {@category Property Streams}
 /// A property stream for JSON string values.
 ///
 /// Provides both a [stream] that emits string chunks as they are parsed,
@@ -135,7 +133,6 @@ class StringPropertyStream extends PropertyStream<String> {
   Stream<String> get stream => _replayableStreamFactory();
 }
 
-/// {@category Property Streams}
 /// A property stream for JSON number values.
 ///
 /// Provides a [future] that completes with the parsed number value.
@@ -165,7 +162,6 @@ class NumberPropertyStream extends PropertyStream<num> {
   Stream<num> get stream => _stream;
 }
 
-/// {@category Property Streams}
 /// A property stream for JSON null values.
 ///
 /// Provides a [future] that completes with null when the null value
@@ -188,7 +184,6 @@ class NullPropertyStream extends PropertyStream<Null> {
   Stream<Null> get stream => _stream;
 }
 
-/// {@category Property Streams}
 /// A property stream for JSON boolean values.
 ///
 /// Provides a [future] that completes with the parsed boolean value.
@@ -210,7 +205,6 @@ class BooleanPropertyStream extends PropertyStream<bool> {
   Stream<bool> get stream => _stream;
 }
 
-/// {@category Property Streams}
 /// A property stream for JSON array values.
 ///
 /// Provides:
@@ -317,7 +311,6 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>>
   JsonStreamParserController get parserController => _parserController;
 }
 
-/// {@category Property Streams}
 /// A property stream for JSON object (map) values.
 ///
 /// Provides:

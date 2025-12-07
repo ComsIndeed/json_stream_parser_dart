@@ -1,4 +1,3 @@
-/// {@category Utilities}
 /// Utility function to stream text in chunks with configurable timing.
 ///
 /// This is useful for testing the parser with simulated streaming data

@@ -1,4 +1,3 @@
-/// {@category Observability}
 /// Represents a log event from the JSON stream parser.
 ///
 /// Log events provide visibility into the parsing process, including
@@ -51,7 +50,6 @@ class ParseEvent {
   }
 }
 
-/// {@category Observability}
 /// Types of parsing events that can be logged.
 ///
 /// These event types are used in [ParseEvent.type] to indicate what

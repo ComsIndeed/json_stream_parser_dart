@@ -1,11 +1,11 @@
+## 0.4.3
+### Documentation
+- **Fixed broken docs**: Removed dartdoc categories that caused broken topic links on pub.dev
+
 ## 0.4.2
 ### Documentation
-- **Dartdoc categories**: Added documentation categories for pub.dev API docs
-  - Parser: Main `JsonStreamParser` class
-  - Property Streams: All `PropertyStream` subclasses
-  - Observability: `ParseEvent` and `ParseEventType`
-  - Utilities: `streamTextInChunks` helper
-- **Fixed dartdoc topic pages**: Topic markdown files now correctly generate on pub.dev
+- **Enhanced API documentation**: Improved documentation comments for all public classes
+- **Simplified docs structure**: Removed experimental dartdoc categories for cleaner pub.dev integration
 
 ## 0.4.1
 ### Performance
