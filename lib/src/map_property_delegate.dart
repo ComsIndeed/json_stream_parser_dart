@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'list_property_delegate.dart';
 import 'parse_event.dart';
 import 'property_delegate.dart';
 import 'property_stream_controller.dart';
@@ -17,7 +18,7 @@ class MapPropertyDelegate extends PropertyDelegate {
   MapParserState _state = MapParserState.waitingForKey;
 
   bool _firstCharacter = true;
-  String _keyBuffer = "";
+  final StringBuffer _keyBuffer = StringBuffer();
   PropertyDelegate? _activeChildDelegate;
 
   // Track all keys that have been parsed
@@ -80,7 +81,7 @@ class MapPropertyDelegate extends PropertyDelegate {
         _state = MapParserState.waitingForValue;
         return;
       } else {
-        _keyBuffer += character;
+        _keyBuffer.write(character);
         return;
       }
     }
@@ -96,9 +97,8 @@ class MapPropertyDelegate extends PropertyDelegate {
         _activeChildDelegate = null;
         // Only reprocess if the child is NOT a list or map
         // (lists and maps consume their own closing brackets)
-        final childType = childDelegate.runtimeType.toString();
-        if (childType == 'ListPropertyDelegate' ||
-            childType == 'MapPropertyDelegate') {
+        if (childDelegate is ListPropertyDelegate ||
+            childDelegate is MapPropertyDelegate) {
           return; // Don't reprocess - child consumed the closing bracket
         }
         // For other types (numbers, strings, etc), reprocess the delimiter
@@ -110,14 +110,15 @@ class MapPropertyDelegate extends PropertyDelegate {
     if (_state == MapParserState.waitingForValue) {
       if (character == " " || character == ":") return;
       // Add this key to our list of keys
-      _keys.add(_keyBuffer);
+      final currentKeyString = _keyBuffer.toString();
+      _keys.add(currentKeyString);
 
       // Emit mapKeyDiscovered event
       _emitLog(ParseEvent(
         type: ParseEventType.mapKeyDiscovered,
         propertyPath: propertyPath,
-        message: 'Discovered key: $_keyBuffer',
-        data: _keyBuffer,
+        message: 'Discovered key: $currentKeyString',
+        data: currentKeyString,
       ));
 
       _childSubscription?.cancel();
@@ -125,7 +126,7 @@ class MapPropertyDelegate extends PropertyDelegate {
 
       // FIRST: Determine the type and create the PropertyStream
       // This ensures the controller exists before the delegate tries to use it
-      final childPath = newPath(_keyBuffer);
+      final childPath = newPath(currentKeyString);
       final Type streamType;
       if (character == '"') {
         streamType = String;
@@ -150,27 +151,27 @@ class MapPropertyDelegate extends PropertyDelegate {
 
       final propertyStream =
           parserController.getPropertyStream(childPath, streamType);
-      _currentMap[_keyBuffer] = null;
-      final currentKey = _keyBuffer;
+      _currentMap[currentKeyString] = null;
 
       // Set up a subscription to update the map when the child emits values
       // Only subscribe to types that can emit multiple events (String, Map, List)
       if (propertyStream is MapPropertyStream) {
         _childSubscription = propertyStream.stream.listen((value) {
-          _currentMap[currentKey] = value;
+          _currentMap[currentKeyString] = value;
           _emitUpdate();
         });
       } else if (propertyStream is ListPropertyStream) {
         _childSubscription = propertyStream.stream.listen((value) {
-          _currentMap[currentKey] = value;
+          _currentMap[currentKeyString] = value;
           _emitUpdate();
         });
       } else if (propertyStream is StringPropertyStream) {
         _childSubscription = propertyStream.stream.listen((value) {
-          if (_currentMap[currentKey] == null) {
-            _currentMap[currentKey] = value;
+          if (_currentMap[currentKeyString] == null) {
+            _currentMap[currentKeyString] = value;
           } else {
-            _currentMap[currentKey] = _currentMap[currentKey] + value;
+            _currentMap[currentKeyString] =
+                _currentMap[currentKeyString] + value;
           }
           _emitUpdate();
         });
@@ -186,7 +187,7 @@ class MapPropertyDelegate extends PropertyDelegate {
                 as MapPropertyStreamController;
 
         for (final callback in mapController.onPropertyCallbacks) {
-          callback(propertyStream, currentKey);
+          callback(propertyStream, currentKeyString);
         }
       } catch (_) {
         // Map controller doesn't exist - no one is listening to onProperty, so skip
@@ -226,7 +227,7 @@ class MapPropertyDelegate extends PropertyDelegate {
       }
       if (character == ',') {
         _state = MapParserState.waitingForKey;
-        _keyBuffer = "";
+        _keyBuffer.clear();
         return;
       } else if (character == '}') {
         _completeMap();

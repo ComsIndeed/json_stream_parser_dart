@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'map_property_delegate.dart';
 import 'parse_event.dart';
 import 'property_delegate.dart';
 import 'property_stream.dart';
@@ -12,7 +13,8 @@ class ListPropertyDelegate extends PropertyDelegate {
     super.onComplete,
   });
 
-  static const _valueFirstCharacters = [
+  /// Characters that can start a JSON value (Set for O(1) lookup)
+  static const _valueFirstCharacters = <String>{
     '"',
     '{',
     '[',
@@ -30,7 +32,7 @@ class ListPropertyDelegate extends PropertyDelegate {
     '7',
     '8',
     '9',
-  ];
+  };
 
   // State machine
   ListParserState _state = ListParserState.waitingForValue;
@@ -128,9 +130,8 @@ class ListPropertyDelegate extends PropertyDelegate {
         _state = ListParserState.waitingForCommaOrEnd;
         // Only reprocess if the child is NOT a list or map
         // (lists and maps consume their own closing brackets)
-        final childType = childDelegate.runtimeType.toString();
-        if (childType == 'ListPropertyDelegate' ||
-            childType == 'MapPropertyDelegate') {
+        if (childDelegate is ListPropertyDelegate ||
+            childDelegate is MapPropertyDelegate) {
           return; // Don't reprocess - child consumed the closing bracket
         }
         // For other types (numbers, strings, etc), reprocess the delimiter

@@ -9,7 +9,7 @@ class StringPropertyDelegate extends PropertyDelegate {
     super.onComplete,
   });
 
-  String _buffer = "";
+  final StringBuffer _buffer = StringBuffer();
   bool _isEscaping = false;
   bool _firstCharacter = true;
 
@@ -31,16 +31,18 @@ class StringPropertyDelegate extends PropertyDelegate {
   void onChunkEnd() {
     if (_buffer.isEmpty || isDone) return;
 
+    final bufferContent = _buffer.toString();
+
     // Emit stringChunk event
     _emitLog(ParseEvent(
       type: ParseEventType.stringChunk,
       propertyPath: propertyPath,
-      message: 'String chunk: ${_buffer.length} chars',
-      data: _buffer,
+      message: 'String chunk: ${bufferContent.length} chars',
+      data: bufferContent,
     ));
 
-    addPropertyChunk(_buffer);
-    _buffer = "";
+    addPropertyChunk(bufferContent);
+    _buffer.clear();
   }
 
   @override
@@ -58,32 +60,33 @@ class StringPropertyDelegate extends PropertyDelegate {
       // Handle escape sequences - convert them to actual characters
       switch (character) {
         case '"':
-          _buffer += '"';
+          _buffer.write('"');
           break;
         case '\\':
-          _buffer += '\\';
+          _buffer.write('\\');
           break;
         case '/':
-          _buffer += '/';
+          _buffer.write('/');
           break;
         case 'b':
-          _buffer += '\b';
+          _buffer.write('\b');
           break;
         case 'f':
-          _buffer += '\f';
+          _buffer.write('\f');
           break;
         case 'n':
-          _buffer += '\n';
+          _buffer.write('\n');
           break;
         case 'r':
-          _buffer += '\r';
+          _buffer.write('\r');
           break;
         case 't':
-          _buffer += '\t';
+          _buffer.write('\t');
           break;
         default:
           // For unknown escape sequences, include both backslash and character
-          _buffer += '\\$character';
+          _buffer.write('\\');
+          _buffer.write(character);
           break;
       }
       _isEscaping = false;
@@ -97,16 +100,18 @@ class StringPropertyDelegate extends PropertyDelegate {
       isDone = true;
       // Emit final chunk if there's any remaining buffer
       if (_buffer.isNotEmpty) {
+        final bufferContent = _buffer.toString();
+
         // Emit stringChunk event for the final chunk
         _emitLog(ParseEvent(
           type: ParseEventType.stringChunk,
           propertyPath: propertyPath,
-          message: 'String chunk: ${_buffer.length} chars',
-          data: _buffer,
+          message: 'String chunk: ${bufferContent.length} chars',
+          data: bufferContent,
         ));
 
-        addPropertyChunk(_buffer);
-        _buffer = "";
+        addPropertyChunk(bufferContent);
+        _buffer.clear();
       }
       // Complete the string controller - it will use its accumulated buffer
       final controller = parserController.getPropertyStreamController(
@@ -127,6 +132,6 @@ class StringPropertyDelegate extends PropertyDelegate {
       onComplete?.call();
       return;
     }
-    _buffer += character;
+    _buffer.write(character);
   }
 }

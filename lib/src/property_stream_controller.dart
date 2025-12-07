@@ -49,10 +49,11 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
   @override
   late final StringPropertyStream propertyStream;
 
-  String _buffer = "";
+  final StringBuffer _buffer = StringBuffer();
+
   void addChunk(String chunk) {
     if (!_isClosed) {
-      _buffer += chunk;
+      _buffer.write(chunk);
       streamController.add(chunk);
     }
   }
@@ -60,8 +61,9 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
   Stream<String> get liveStream => streamController.stream;
 
   Stream<String> createReplayableStream() async* {
-    if (_buffer.isNotEmpty) {
-      yield _buffer;
+    final currentBuffer = _buffer.toString();
+    if (currentBuffer.isNotEmpty) {
+      yield currentBuffer;
     }
     if (!_isClosed) {
       yield* streamController.stream;
@@ -75,7 +77,7 @@ class StringPropertyStreamController extends PropertyStreamController<String> {
   /// [value] will be ignored. The stream will emit the accumulated chunks instead.
   void complete(String value) {
     if (!_isClosed) {
-      completer.complete(_buffer);
+      completer.complete(_buffer.toString());
       streamController.close();
       onClose();
     }
