@@ -74,7 +74,7 @@ Instead of waiting for the entire JSON response to complete, you can:
 ```yaml
 # pubspec.yaml
 dependencies:
-  llm_json_stream: ^0.4.0
+  llm_json_stream: ^0.4.1
 ```
 
 ```dart

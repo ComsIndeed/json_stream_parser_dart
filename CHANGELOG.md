@@ -1,3 +1,18 @@
+## 0.4.1
+### Performance
+- **StringBuffer optimization**: Replaced String concatenation with StringBuffer in delegates and controllers for better memory efficiency
+- **Type check optimization**: Replaced `runtimeType.toString()` comparisons with `is` type checks for faster delegate detection
+- **Set for O(1) lookups**: Changed `_valueFirstCharacters` from List to Set in ListPropertyDelegate
+
+### Documentation
+- **Contributor documentation**: Added comprehensive internal architecture docs with Mermaid diagrams
+  - Architecture overview and system design
+  - Detailed delegate documentation with state machines
+  - Property stream and controller architecture
+  - Data flow examples with sequence diagrams
+  - Path system, streaming mechanism, and nesting handler explanations
+- **README links**: Added contributor documentation links to the README
+
 ## 0.4.0
 ### Added
 - **Buffered streams for Maps and Lists**: Both `MapPropertyStream` and `ListPropertyStream` now support buffered (replayable) streams, matching `StringPropertyStream` behavior
