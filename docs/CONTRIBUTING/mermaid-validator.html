@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Diagram Validator</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        h2 { 
+            color: #0066cc; 
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 8px;
+            margin-top: 40px;
+        }
+        h3 { color: #666; margin-top: 30px; }
+        .diagram-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .diagram-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .error {
+            background: #fee;
+            border: 2px solid #f00;
+            color: #c00;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            color: #0a0;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .source-code {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin-top: 10px;
+            display: none;
+        }
+        .toggle-source {
+            cursor: pointer;
+            color: #0066cc;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .summary {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .summary.has-errors {
+            background: #ffebee;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧜‍♀️ Mermaid Diagram Validator</h1>
+    <div id="summary" class="summary">
+        <strong>Status:</strong> <span id="status">Loading...</span>
+    </div>
+
+    <h2>README.md</h2>
+    
+    <h3>Architecture at a Glance</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Main Architecture Diagram</div>
+        <pre class="mermaid">
+graph TB
+    subgraph Input
+        IS[Input Stream of String]
+    end
+    
+    subgraph Parser
+        JSP[JsonStreamParser]
+        JSPC[JsonStreamParserController]
+    end
+    
+    subgraph Delegates
+        MPD[MapPropertyDelegate]
+        LPD[ListPropertyDelegate]
+        SPD[StringPropertyDelegate]
+        NPD[NumberPropertyDelegate]
+        BPD[BooleanPropertyDelegate]
+        NuPD[NullPropertyDelegate]
+    end
+    
+    subgraph Controllers
+        SPSC[StringPropertyStreamController]
+        NPSC[NumberPropertyStreamController]
+        BPSC[BooleanPropertyStreamController]
+        NuPSC[NullPropertyStreamController]
+        MPSC[MapPropertyStreamController]
+        LPSC[ListPropertyStreamController]
+    end
+    
+    subgraph Streams
+        SPS[StringPropertyStream]
+        NPS[NumberPropertyStream]
+        BPS[BooleanPropertyStream]
+        NuPS[NullPropertyStream]
+        MPS[MapPropertyStream]
+        LPS[ListPropertyStream]
+    end
+    
+    IS --> JSP
+    JSP --> JSPC
+    JSPC --> MPD
+    JSPC --> LPD
+    MPD --> SPD
+    MPD --> NPD
+    MPD --> BPD
+    MPD --> NuPD
+    MPD --> LPD
+    MPD --> MPD
+    LPD --> SPD
+    LPD --> NPD
+    LPD --> BPD
+    LPD --> NuPD
+    LPD --> LPD
+    LPD --> MPD
+        </pre>
+    </div>
+
+    <h2>architecture-overview.md</h2>
+
+    <h3>System Architecture</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Input/Parsing/Output Layers</div>
+        <pre class="mermaid">
+graph LR
+    subgraph Input_Layer
+        A[Stream of String] -->|chunks| B[JsonStreamParser]
+    end
+    
+    subgraph Parsing_Layer
+        B -->|characters| C[Root Delegate]
+        C -->|nested values| D[Child Delegates]
+        D -->|more nesting| E[...]
+    end
+    
+    subgraph Output_Layer
+        C -->|parsed data| F[PropertyStreamControllers]
+        D -->|parsed data| F
+        F -->|stream data| G[PropertyStreams]
+        G -->|to user| H[User Code]
+    end
+        </pre>
+    </div>
+
+    <h3>Data Flow Sequence</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Parser Sequence Diagram</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant Parser as JsonStreamParser
+    participant Ctrl as Controller
+    participant Del as Delegate
+    participant PSC as PropertyStreamController
+    participant PS as PropertyStream
+    
+    User->>Parser: getStringProperty name
+    Parser->>PSC: create if not exists
+    PSC->>PS: create PropertyStream
+    Parser-->>User: PropertyStream
+    
+    Note over Parser,Del: Later as JSON streams in
+    
+    Parser->>Del: addCharacter char
+    Del->>Del: Parse character
+    Del->>Ctrl: addPropertyChunk value
+    Ctrl->>PSC: addChunk value
+    PSC->>PS: emit to stream
+    PS-->>User: stream event
+    
+    Note over Del,PSC: When value completes
+    
+    Del->>PSC: complete value
+    PSC->>PS: complete future
+    PS-->>User: future resolves
+        </pre>
+    </div>
+
+    <h3>MapPropertyDelegate State Machine</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">State Diagram</div>
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> WaitingForKey: open brace received
+    WaitingForKey --> ReadingKey: quote received
+    ReadingKey --> WaitingForValue: quote received key complete
+    WaitingForValue --> ReadingValue: value char received
+    ReadingValue --> WaitingForCommaOrEnd: child delegate done
+    WaitingForCommaOrEnd --> WaitingForKey: comma received
+    WaitingForCommaOrEnd --> [*]: close brace received
+    WaitingForKey --> [*]: close brace received empty object
+        </pre>
+    </div>
+
+    <h2>core-components.md</h2>
+
+    <h3>Parsing Flow</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Parsing Flow Chart</div>
+        <pre class="mermaid">
+graph TD
+    A[Stream emits chunk] --> B{isDisposed?}
+    B -->|Yes| Z[Return]
+    B -->|No| C{Yap filter active?}
+    C -->|Yes| D[Cancel and return]
+    C -->|No| E[Process each character]
+    E --> F{Root exists?}
+    F -->|Yes| G[Delegate processes char]
+    F -->|No| H{JSON start char?}
+    H -->|Yes| I[Create root delegate]
+    H -->|No| E
+    I --> G
+    G --> E
+    E -->|Chunk done| J[Flush buffers]
+        </pre>
+    </div>
+
+    <h2>delegates.md</h2>
+
+    <h3>Class Diagram</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Delegate Inheritance</div>
+        <pre class="mermaid">
+classDiagram
+    PropertyDelegate --|> StringPropertyDelegate
+    PropertyDelegate --|> NumberPropertyDelegate
+    PropertyDelegate --|> BooleanPropertyDelegate
+    PropertyDelegate --|> NullPropertyDelegate
+    PropertyDelegate --|> MapPropertyDelegate
+    PropertyDelegate --|> ListPropertyDelegate
+    
+    class PropertyDelegate {
+        +String propertyPath
+        +JsonStreamParserController parserController
+        +bool isDone
+        +onComplete callback
+        +addCharacter String
+        +onChunkEnd
+        +addPropertyChunk value
+        +newPath String
+    }
+    
+    class MapPropertyDelegate {
+        -StringBuffer keyBuffer
+        -Map currentMap
+        -PropertyDelegate activeChildDelegate
+        -MapParserState state
+    }
+    
+    class ListPropertyDelegate {
+        -int index
+        -List currentList
+        -PropertyDelegate activeChildDelegate
+        -ListParserState state
+    }
+    
+    class StringPropertyDelegate {
+        -StringBuffer buffer
+        -bool isEscaping
+    }
+    
+    class NumberPropertyDelegate {
+        -StringBuffer buffer
+    }
+        </pre>
+    </div>
+
+    <h3>StringPropertyDelegate State Machine</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">String Parsing States</div>
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> WaitingForQuote
+    WaitingForQuote --> Parsing: quote received
+    Parsing --> Escaping: backslash received
+    Escaping --> Parsing: escape char processed
+    Parsing --> [*]: quote received closing
+        </pre>
+    </div>
+
+    <h3>String Chunk Emission</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Chunk Emission Sequence</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant Input
+    participant Delegate
+    participant Controller
+    
+    Input->>Delegate: Hel
+    Delegate->>Delegate: Buffer Hel
+    Input->>Delegate: chunk ends
+    Delegate->>Controller: emit Hel
+    Input->>Delegate: lo
+    Delegate->>Delegate: Buffer lo
+    Input->>Delegate: closing quote
+    Delegate->>Controller: emit lo
+    Delegate->>Controller: complete
+        </pre>
+    </div>
+
+    <h3>Map State Machine</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">MapPropertyDelegate States</div>
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> WaitingForKey: open brace received
+    
+    WaitingForKey --> ReadingKey: quote received
+    WaitingForKey --> [*]: close brace empty object
+    
+    ReadingKey --> WaitingForValue: quote key ends
+    
+    WaitingForValue --> ReadingValue: value char received
+    
+    ReadingValue --> WaitingForCommaOrEnd: child done
+    
+    WaitingForCommaOrEnd --> WaitingForKey: comma received
+    WaitingForCommaOrEnd --> [*]: close brace received
+        </pre>
+    </div>
+
+    <h3>Child Delegate Management</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Child Delegate Sequence</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant Parent as MapPropertyDelegate
+    participant Factory as createDelegate
+    participant Child as ChildDelegate
+    
+    Parent->>Factory: createDelegate firstChar
+    Factory-->>Parent: new delegate
+    Parent->>Child: addCharacter char
+    
+    loop Until child done
+        Parent->>Child: addCharacter char
+    end
+    
+    Child->>Parent: onComplete callback
+    Parent->>Parent: activeChildDelegate equals null
+        </pre>
+    </div>
+
+    <h3>List State Machine</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">ListPropertyDelegate States</div>
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> WaitingForValue: open bracket received
+    
+    WaitingForValue --> ReadingValue: value char received
+    WaitingForValue --> [*]: close bracket empty array
+    
+    ReadingValue --> WaitingForCommaOrEnd: child done
+    
+    WaitingForCommaOrEnd --> WaitingForValue: comma received
+    WaitingForCommaOrEnd --> [*]: close bracket received
+        </pre>
+    </div>
+
+    <h3>Delegate Lifecycle</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Lifecycle Sequence</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant Parser
+    participant Parent as ParentDelegate
+    participant Child as ChildDelegate
+    participant Controller
+    
+    Parser->>Parent: addCharacter open brace
+    Parent->>Parent: Initialize state
+    
+    loop For each character
+        Parser->>Parent: addCharacter c
+        
+        alt Has active child
+            Parent->>Child: addCharacter c
+            
+            alt Child done
+                Child-->>Parent: onComplete
+                Parent->>Parent: activeChild equals null
+            end
+        else No active child
+            Parent->>Parent: Process character
+            
+            alt Value starting
+                Parent->>Child: create delegate
+                Parent->>Child: addCharacter c
+            end
+        end
+    end
+    
+    Parser->>Parent: onChunkEnd
+    Parent->>Child: onChunkEnd if exists
+    Parent->>Controller: emit incremental update
+        </pre>
+    </div>
+
+    <h2>property-streams-controllers.md</h2>
+
+    <h3>Overview</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Stream Controller Architecture</div>
+        <pre class="mermaid">
+graph LR
+    subgraph Parsing
+        D[Delegate]
+    end
+    
+    subgraph State_Management
+        PSC[PropertyStreamController]
+        SC[StreamController]
+        C[Completer]
+        B[Buffer]
+    end
+    
+    subgraph User_API
+        PS[PropertyStream]
+        S[.stream]
+        F[.future]
+    end
+    
+    D -->|addChunk| PSC
+    PSC --> SC
+    PSC --> C
+    PSC --> B
+    
+    PSC --> PS
+    PS --> S
+    PS --> F
+    
+    SC -->|events| S
+    C -->|completion| F
+        </pre>
+    </div>
+
+    <h3>Replayable vs Live Streams</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Early vs Late Subscriber</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant D as Delegate
+    participant C as Controller
+    participant Sub1 as Early Subscriber
+    participant Sub2 as Late Subscriber
+    
+    D->>C: addChunk Hel
+    C->>Sub1: Hel
+    
+    D->>C: addChunk lo
+    C->>Sub1: lo
+    
+    Note over Sub2: Subscribes AFTER chunks
+    
+    Sub2->>C: subscribe to stream
+    C->>Sub2: Hello buffered
+    C->>Sub2: future events
+        </pre>
+    </div>
+
+    <h3>Incremental Map Updates</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Map Updates Sequence</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant D as MapDelegate
+    participant C as Controller
+    participant Sub as Subscriber
+    
+    D->>C: addNew name Al
+    C->>Sub: name Al
+    
+    D->>C: addNew name Alice age null
+    C->>Sub: name Alice age null
+    
+    D->>C: addNew name Alice age 30
+    C->>Sub: name Alice age 30
+    
+    D->>C: complete name Alice age 30
+    C-->>Sub: future resolves
+        </pre>
+    </div>
+
+    <h2>mechanisms.md</h2>
+
+    <h3>Path Construction</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Path Building</div>
+        <pre class="mermaid">
+graph TD
+    subgraph Root_Level
+        A[JsonStreamParser] -->|buildPropertyPath name| B[name]
+    end
+    
+    subgraph Map_Level
+        C[MapPropertyStream at user] -->|buildPropertyPath age| D[user.age]
+    end
+    
+    subgraph List_Level
+        E[ListPropertyStream at items] -->|buildPropertyPath bracket 0| F[items bracket 0]
+        E -->|buildPropertyPath name| G[items.name]
+    end
+        </pre>
+    </div>
+
+    <h3>Character-by-Character Flow</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Streaming Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant Stream as Input Stream
+    participant Parser as JsonStreamParser
+    participant Root as RootDelegate
+    participant Child as ChildDelegate
+    participant Controller as PSController
+    
+    Stream->>Parser: chunk received
+    loop Each character
+        Parser->>Root: addCharacter c
+        Root->>Child: addCharacter c if active
+        Child->>Controller: addChunk value when ready
+    end
+    
+    Parser->>Root: onChunkEnd
+    Root->>Child: onChunkEnd
+    Child->>Controller: flush buffer
+        </pre>
+    </div>
+
+    <h3>Delegate Hierarchy</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Nested Delegates</div>
+        <pre class="mermaid">
+graph TD
+    subgraph JSON_user_name_Alice_tags_a_b
+        A[MapPropertyDelegate path root] --> B[MapPropertyDelegate path user]
+        B --> C[StringPropertyDelegate path user.name]
+        B --> D[ListPropertyDelegate path user.tags]
+        D --> E[StringPropertyDelegate path user.tags 0]
+        D --> F[StringPropertyDelegate path user.tags 1]
+    end
+        </pre>
+    </div>
+
+    <h3>Type Handler</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Type Detection Flow</div>
+        <pre class="mermaid">
+graph TD
+    A[First Character] --> B{Which type?}
+    B -->|quote| C[StringPropertyDelegate]
+    B -->|open brace| D[MapPropertyDelegate]
+    B -->|open bracket| E[ListPropertyDelegate]
+    B -->|t or f| F[BooleanPropertyDelegate]
+    B -->|n| G[NullPropertyDelegate]
+    B -->|digit or minus| H[NumberPropertyDelegate]
+        </pre>
+    </div>
+
+    <h3>Controller-First Pattern Scenario 1</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">User Subscribed First</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant Parser
+    participant Delegate
+    participant Controller
+    
+    Note over User,Controller: Scenario 1 User subscribed first
+    User->>Parser: getStringProperty name
+    Parser->>Controller: create controller
+    Parser-->>User: PropertyStream
+    
+    Note over Delegate: Later parsing begins
+    Delegate->>Parser: getPropertyStream name String
+    Parser-->>Delegate: existing controller
+    Delegate->>Controller: addChunk Alice
+    Controller-->>User: stream event
+        </pre>
+    </div>
+
+    <h3>Controller-First Pattern Scenario 2</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Parsing Before Subscription</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant Parser
+    participant Delegate
+    participant Controller
+    
+    Note over User,Controller: Scenario 2 Parsing before subscription
+    Delegate->>Parser: getPropertyStream name String
+    Parser->>Controller: create controller
+    
+    Delegate->>Controller: addChunk Alice
+    
+    Note over User: Later user subscribes
+    User->>Parser: getStringProperty name
+    Parser-->>User: existing controller stream
+    User->>Controller: listen to stream
+    Controller-->>User: Alice buffered replay
+        </pre>
+    </div>
+
+    <h3>Map Incremental Updates</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Map Update Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant JSON as Input
+    participant Delegate
+    participant Controller
+    participant User
+    
+    JSON->>Delegate: name colon
+    Delegate->>Controller: addNew name null
+    Controller->>User: name null
+    
+    JSON->>Delegate: Alice comma
+    Delegate->>Controller: addNew name Alice
+    Controller->>User: name Alice
+    
+    JSON->>Delegate: age colon
+    Delegate->>Controller: addNew name Alice age null
+    Controller->>User: name Alice age null
+    
+    JSON->>Delegate: 30 close brace
+    Delegate->>Controller: complete name Alice age 30
+    Controller->>User: future resolves
+        </pre>
+    </div>
+
+    <h3>List Incremental Updates</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">List Update Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant JSON as Input
+    participant Delegate
+    participant Controller
+    participant User
+    
+    JSON->>Delegate: 1 comma
+    Delegate->>Controller: addNew list 1
+    Controller->>User: list 1
+    
+    JSON->>Delegate: 2 comma
+    Delegate->>Controller: addNew list 1 2
+    Controller->>User: list 1 2
+    
+    JSON->>Delegate: 3 close bracket
+    Delegate->>Controller: complete list 1 2 3
+    Controller->>User: future resolves
+        </pre>
+    </div>
+
+    <h3>Summary Diagram</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Complete System Overview</div>
+        <pre class="mermaid">
+graph TB
+    subgraph Input
+        IS[Stream of String]
+    end
+    
+    subgraph Path_System
+        PS[PropertyPath]
+    end
+    
+    subgraph Type_Handler
+        TH[Delegator Mixin]
+    end
+    
+    subgraph Nesting_Handler
+        RD[Root Delegate]
+        CD1[Child Delegate]
+        CD2[Child Delegate]
+    end
+    
+    subgraph Streaming
+        SC[StreamController]
+        CO[Completer]
+    end
+    
+    subgraph Controller_First
+        PSC[PropertyStreamController]
+    end
+    
+    subgraph Yap_Filter
+        YF[closeOnRootComplete]
+    end
+    
+    IS --> RD
+    RD --> TH
+    TH --> CD1
+    TH --> CD2
+    RD --> CD1
+    CD1 --> CD2
+    
+    CD1 --> PS
+    CD2 --> PS
+    
+    PS --> PSC
+    PSC --> SC
+    PSC --> CO
+    
+    RD --> YF
+        </pre>
+    </div>
+
+    <h2>data-flow.md</h2>
+
+    <h3>Simple String Property</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">String Property Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant Parser as JsonStreamParser
+    participant SPSC as StringPropertyStreamController
+    participant MPD as MapPropertyDelegate
+    participant SPD as StringPropertyDelegate
+    
+    User->>Parser: getStringProperty name
+    Parser->>SPSC: create controller
+    Parser-->>User: StringPropertyStream
+    User->>SPSC: listen to stream
+    
+    Note over Parser: Stream emits name Alice
+    
+    Parser->>MPD: create root delegate
+    Parser->>MPD: addCharacter open brace
+    Parser->>MPD: addCharacter quote
+    MPD->>MPD: state becomes readingKey
+    Parser->>MPD: addCharacter n
+    MPD->>MPD: keyBuffer write n
+    Parser->>MPD: addCharacter a
+    Parser->>MPD: addCharacter m
+    Parser->>MPD: addCharacter e
+    Parser->>MPD: addCharacter quote
+    MPD->>MPD: state becomes waitingForValue
+    Parser->>MPD: addCharacter colon
+    Parser->>MPD: addCharacter space
+    Parser->>MPD: addCharacter quote
+    
+    Note over MPD: Value starts create child delegate
+    MPD->>SPD: create delegate for name
+    MPD->>SPD: addCharacter quote
+    
+    Parser->>MPD: addCharacter A
+    MPD->>SPD: addCharacter A
+    SPD->>SPD: buffer write A
+    
+    Parser->>MPD: addCharacter l to e
+    MPD->>SPD: addCharacter l to e
+    SPD->>SPD: buffer write
+    
+    Parser->>MPD: addCharacter quote
+    MPD->>SPD: addCharacter quote
+    SPD->>SPSC: addChunk Alice
+    SPSC-->>User: stream event Alice
+    SPD->>SPSC: complete empty
+    SPSC-->>User: future resolves Alice
+    SPD-->>MPD: onComplete
+    
+    Parser->>MPD: addCharacter close brace
+    MPD->>MPD: isDone equals true
+        </pre>
+    </div>
+
+    <h3>Nested Map</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Nested Map Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant Parser
+    participant RootMap as MapDelegate root
+    participant UserMap as MapDelegate user
+    participant NameStr as StringDelegate user.name
+    participant AgeNum as NumberDelegate user.age
+    participant NameCtrl as StringController
+    participant AgeCtrl as NumberController
+    
+    Note over Parser: user name Bob age 30
+    
+    Parser->>RootMap: addCharacter open brace
+    
+    Note over RootMap: Parse key user
+    
+    Parser->>RootMap: addCharacter quote
+    Parser->>RootMap: addCharacter u s e r
+    Parser->>RootMap: addCharacter quote
+    Parser->>RootMap: addCharacter colon
+    Parser->>RootMap: addCharacter space
+    Parser->>RootMap: addCharacter open brace
+    
+    RootMap->>UserMap: create delegate
+    RootMap->>UserMap: addCharacter open brace
+    
+    Note over UserMap: Parse key name
+    
+    Parser->>RootMap: addCharacter quote
+    RootMap->>UserMap: addCharacter quote
+    Parser->>RootMap: addCharacter n a m e
+    RootMap->>UserMap: addCharacter name chars
+    Parser->>RootMap: addCharacter quote
+    RootMap->>UserMap: addCharacter quote
+    Parser->>RootMap: addCharacter colon
+    RootMap->>UserMap: addCharacter colon
+    
+    Note over UserMap: Create string delegate
+    
+    Parser->>RootMap: addCharacter quote
+    RootMap->>UserMap: addCharacter quote
+    UserMap->>NameStr: create delegate
+    
+    Parser->>RootMap: addCharacter B o b
+    RootMap->>UserMap: addCharacter Bob
+    UserMap->>NameStr: addCharacter Bob
+    
+    Parser->>RootMap: addCharacter quote
+    RootMap->>UserMap: addCharacter quote
+    UserMap->>NameStr: addCharacter quote
+    NameStr->>NameCtrl: complete Bob
+    NameStr-->>UserMap: onComplete
+    
+    Note over UserMap: Parse age 30
+    
+    Parser->>RootMap: addCharacter comma
+    RootMap->>UserMap: addCharacter comma
+    
+    Note over UserMap: parse age key
+    
+    Parser->>RootMap: addCharacter 3 0
+    RootMap->>UserMap: addCharacter 30
+    UserMap->>AgeNum: addCharacter 30
+    
+    Parser->>RootMap: addCharacter close brace
+    RootMap->>UserMap: addCharacter close brace
+    UserMap->>AgeNum: addCharacter close brace
+    AgeNum->>AgeCtrl: complete 30
+    AgeNum-->>UserMap: onComplete
+    UserMap->>UserMap: isDone equals true
+    UserMap-->>RootMap: onComplete
+    
+    Parser->>RootMap: addCharacter close brace
+    RootMap->>RootMap: isDone equals true
+        </pre>
+    </div>
+
+    <h3>Array with onElement</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Array onElement Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant Parser
+    participant RootMap as MapDelegate
+    participant ListDel as ListDelegate items
+    participant Map1 as MapDelegate items 0
+    participant Map2 as MapDelegate items 1
+    participant ListCtrl as ListController
+    
+    User->>Parser: getListProperty items
+    Parser->>ListCtrl: create controller
+    User->>ListCtrl: onElement callback
+    
+    Note over Parser: Parse until items array
+    
+    Parser->>RootMap: addCharacter open bracket
+    RootMap->>ListDel: create delegate
+    
+    Parser->>RootMap: addCharacter open brace
+    RootMap->>ListDel: addCharacter open brace
+    ListDel->>Map1: create delegate for items 0
+    
+    Note over ListCtrl: Fire onElement callback
+    ListCtrl-->>User: onElement MapStream 0
+    User->>User: Subscribe to items 0 id
+    
+    Note over Map1: Parse id 1
+    
+    ListDel->>Map1: complete
+    Map1-->>ListDel: onComplete
+    
+    Parser->>RootMap: addCharacter comma
+    RootMap->>ListDel: addCharacter comma
+    
+    Parser->>RootMap: addCharacter open brace
+    RootMap->>ListDel: addCharacter open brace
+    ListDel->>Map2: create delegate for items 1
+    
+    Note over ListCtrl: Fire onElement callback
+    ListCtrl-->>User: onElement MapStream 1
+    User->>User: Subscribe to items 1 id
+    
+    Note over Map2: Parse id 2
+        </pre>
+    </div>
+
+    <h3>Chunked String Streaming</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Chunked Streaming Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant Stream as Input Stream
+    participant Parser
+    participant MPD as MapDelegate
+    participant SPD as StringDelegate
+    participant Ctrl as StringController
+    participant User
+    
+    Note over Stream: Emit chunk 1 desc Hel
+    
+    Stream->>Parser: chunk desc Hel
+    
+    loop Each character in chunk 1
+        Parser->>MPD: addCharacter c
+        MPD->>SPD: addCharacter c for value chars
+        SPD->>SPD: buffer write c
+    end
+    
+    Parser->>MPD: onChunkEnd
+    MPD->>SPD: onChunkEnd
+    
+    Note over SPD: Buffer has Hel
+    SPD->>Ctrl: addChunk Hel
+    Ctrl-->>User: stream event Hel
+    SPD->>SPD: buffer clear
+    
+    Note over Stream: Emit chunk 2 lo World
+    
+    Stream->>Parser: chunk lo World
+    
+    loop Each character until quote
+        Parser->>MPD: addCharacter c
+        MPD->>SPD: addCharacter c
+        SPD->>SPD: buffer write c
+    end
+    
+    Parser->>MPD: addCharacter quote
+    MPD->>SPD: addCharacter quote
+    
+    Note over SPD: Closing quote complete
+    SPD->>Ctrl: addChunk lo World
+    Ctrl-->>User: stream event lo World
+    SPD->>Ctrl: complete empty
+    Ctrl-->>User: future resolves Hello World
+        </pre>
+    </div>
+
+    <h3>Type Mismatch Error</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Type Mismatch Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant Parser
+    participant NumCtrl as NumberController
+    participant MPD as MapDelegate
+    
+    User->>Parser: getNumberProperty count
+    Parser->>NumCtrl: create NumberController
+    Parser-->>User: NumberPropertyStream
+    
+    Note over Parser: Stream emits count not a number
+    
+    Parser->>MPD: create root delegate
+    
+    Note over MPD: Parse key count
+    
+    MPD->>MPD: Key complete waiting for value
+    MPD->>MPD: First value char is quote
+    
+    Note over MPD: Type detection String
+    
+    MPD->>Parser: getPropertyStream count String
+    
+    Note over Parser: Type mismatch detected
+    Parser->>Parser: NumCtrl exists but expecting String
+    Parser->>NumCtrl: completeError TypeMismatch
+    
+    NumCtrl-->>User: future rejects
+    User->>User: catch Type mismatch
+        </pre>
+    </div>
+
+    <h3>Late Subscription Replay</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Replay Flow</div>
+        <pre class="mermaid">
+sequenceDiagram
+    participant Parser
+    participant Delegate
+    participant Controller
+    participant Buffer as StringBuffer
+    participant User
+    
+    Note over Parser,Buffer: Parsing completes before user subscribes
+    
+    Delegate->>Controller: addChunk Hello
+    Controller->>Buffer: buffer write Hello
+    Controller->>Controller: streamController add Hello
+    
+    Note over Controller: No listeners yet event lost from live stream
+    
+    Delegate->>Controller: complete empty
+    Controller->>Controller: completer complete Hello
+    
+    Note over User: User subscribes late
+    
+    User->>Controller: subscribe to stream
+    Controller->>Controller: createReplayableStream
+    
+    Note over Controller: Check buffer
+    Controller->>Buffer: toString returns Hello
+    Controller-->>User: yield Hello
+    
+    Note over User: User receives buffered content
+        </pre>
+    </div>
+
+    <h3>Complete Data Flow Summary</h3>
+    <div class="diagram-container">
+        <div class="diagram-title">Complete Flow</div>
+        <pre class="mermaid">
+graph TB
+    subgraph Input
+        IS[Input Stream of String]
+    end
+    
+    subgraph Character_Processing
+        IS --> JSP[JsonStreamParser]
+        JSP --> PC[parseChunk]
+        PC --> |for each char| RD[Root Delegate]
+    end
+    
+    subgraph Delegate_Tree
+        RD --> |nested values| CD1[Child Delegate]
+        CD1 --> |more nesting| CD2[Child Delegate]
+    end
+    
+    subgraph Value_Emission
+        CD1 --> |addChunk| CTRL[getPropertyStreamController]
+        CD2 --> |addChunk| CTRL
+        CTRL --> PSC[PropertyStreamController]
+    end
+    
+    subgraph Buffering
+        PSC --> BUF[Buffer Last Value]
+        PSC --> SC[StreamController]
+        PSC --> COMP[Completer]
+    end
+    
+    subgraph User_API
+        SC --> |broadcast| LS[Live Stream]
+        BUF --> |replay| RS[Replayable Stream]
+        COMP --> FUT[Future]
+        
+        LS --> USER[User Code]
+        RS --> USER
+        FUT --> USER
+    end
+        </pre>
+    </div>
+
+    <script>
+        let errorCount = 0;
+        let successCount = 0;
+
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+
+        // Check for errors after rendering
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const diagrams = document.querySelectorAll('.mermaid');
+                diagrams.forEach((diagram, index) => {
+                    const svg = diagram.querySelector('svg');
+                    const container = diagram.closest('.diagram-container');
+                    
+                    if (svg) {
+                        successCount++;
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'success';
+                        successMsg.textContent = '✓ Rendered successfully';
+                        container.appendChild(successMsg);
+                    } else if (diagram.textContent.includes('Syntax error')) {
+                        errorCount++;
+                        container.classList.add('error');
+                    }
+                });
+
+                const summary = document.getElementById('summary');
+                const status = document.getElementById('status');
+                
+                if (errorCount > 0) {
+                    summary.classList.add('has-errors');
+                    status.innerHTML = `<span style="color: red;">❌ ${errorCount} errors found, ${successCount} diagrams rendered successfully</span>`;
+                } else {
+                    status.innerHTML = `<span style="color: green;">✅ All ${successCount} diagrams rendered successfully!</span>`;
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

@@ -9,6 +9,9 @@ PROJECT_STATUS.md
 # AI assistance documentation
 ai-summaries/
 
+# Mermaid validator (HTML file for local testing only)
+docs/CONTRIBUTING/mermaid-validator.html
+
 # Trash and temporary files
 _trash/
 

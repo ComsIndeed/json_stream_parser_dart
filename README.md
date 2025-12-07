@@ -491,6 +491,17 @@ Contributions welcome!
 3. Run `dart test` before submitting
 4. Match existing code style
 
+### Contributor Documentation
+
+New to the codebase? Check out the **[Contributor Documentation](./docs/CONTRIBUTING/README.md)** for:
+
+- 📐 [Architecture Overview](./docs/CONTRIBUTING/architecture-overview.md) - System design with diagrams
+- 🧩 [Core Components](./docs/CONTRIBUTING/core-components.md) - Parser, controller, and mixins
+- 🔧 [Delegates](./docs/CONTRIBUTING/delegates.md) - How each JSON type is parsed
+- 📡 [Property Streams & Controllers](./docs/CONTRIBUTING/property-streams-controllers.md) - Stream architecture
+- ⚙️ [Mechanisms](./docs/CONTRIBUTING/mechanisms.md) - Pathing, streaming, nesting systems
+- 🔄 [Data Flow](./docs/CONTRIBUTING/data-flow.md) - Complete examples with sequence diagrams
+
 ---
 
 ## License
