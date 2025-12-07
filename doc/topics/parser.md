@@ -31,4 +31,4 @@ final age = await parser.getNumberProperty('user.age').future;
 await parser.dispose();
 ```
 
-See the [JsonStreamParser] class documentation for full API details.
+See the `JsonStreamParser` class documentation for full API details.

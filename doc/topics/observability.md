@@ -4,16 +4,16 @@ Monitor and debug the parsing process with logging callbacks.
 
 ## ParseEvent
 
-The [ParseEvent] class represents a parsing event with:
+The `ParseEvent` class represents a parsing event with:
 
-- **`type`**: The event type (see [ParseEventType])
+- **`type`**: The event type (see `ParseEventType`)
 - **`propertyPath`**: The JSON path where the event occurred
 - **`message`**: A human-readable description
 - **`data`**: Optional additional data
 
 ## Event Types
 
-[ParseEventType] includes:
+`ParseEventType` includes:
 
 | Type | Description |
 |------|-------------|

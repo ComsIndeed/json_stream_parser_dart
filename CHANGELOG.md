@@ -1,3 +1,12 @@
+## 0.4.2
+### Documentation
+- **Dartdoc categories**: Added documentation categories for pub.dev API docs
+  - Parser: Main `JsonStreamParser` class
+  - Property Streams: All `PropertyStream` subclasses
+  - Observability: `ParseEvent` and `ParseEventType`
+  - Utilities: `streamTextInChunks` helper
+- **Fixed dartdoc topic pages**: Topic markdown files now correctly generate on pub.dev
+
 ## 0.4.1
 ### Performance
 - **StringBuffer optimization**: Replaced String concatenation with StringBuffer in delegates and controllers for better memory efficiency

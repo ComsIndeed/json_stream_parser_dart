@@ -8,16 +8,16 @@ Each JSON value type has a corresponding property stream class:
 
 | JSON Type | Property Stream | Key Features |
 |-----------|-----------------|--------------|
-| String | [StringPropertyStream] | Chunked streaming, buffered replay |
-| Number | [NumberPropertyStream] | Atomic value emission |
-| Boolean | [BooleanPropertyStream] | Atomic value emission |
-| Null | [NullPropertyStream] | Atomic value emission |
-| Array | [ListPropertyStream] | Incremental updates, `onElement` callback |
-| Object | [MapPropertyStream] | Incremental updates, `onProperty` callback |
+| String | `StringPropertyStream` | Chunked streaming, buffered replay |
+| Number | `NumberPropertyStream` | Atomic value emission |
+| Boolean | `BooleanPropertyStream` | Atomic value emission |
+| Null | `NullPropertyStream` | Atomic value emission |
+| Array | `ListPropertyStream` | Incremental updates, `onElement` callback |
+| Object | `MapPropertyStream` | Incremental updates, `onProperty` callback |
 
 ## Common API
 
-All property streams inherit from [PropertyStream] and provide:
+All property streams inherit from `PropertyStream` and provide:
 
 - **`.future`**: A `Future` that completes with the final parsed value
 - **`.stream`**: A broadcast stream that emits values (buffered for late subscribers)
@@ -25,7 +25,7 @@ All property streams inherit from [PropertyStream] and provide:
 
 ## String Streaming
 
-[StringPropertyStream] is special because it emits **chunks** as they arrive:
+`StringPropertyStream` is special because it emits **chunks** as they arrive:
 
 ```dart
 final title = parser.getStringProperty('title');
@@ -41,7 +41,7 @@ final fullTitle = await title.future;
 
 ## Collection Streaming
 
-[MapPropertyStream] and [ListPropertyStream] support reactive callbacks:
+`MapPropertyStream` and `ListPropertyStream` support reactive callbacks:
 
 ```dart
 // React to new array elements

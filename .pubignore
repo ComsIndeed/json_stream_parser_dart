@@ -9,6 +9,9 @@ PROJECT_STATUS.md
 # Mermaid validator (HTML file for local testing only)
 doc/CONTRIBUTING/mermaid-validator.html
 
+# Generated dartdoc output (pub.dev regenerates this)
+doc/api/
+
 # Git and IDE files
 .git/
 .gitignore
