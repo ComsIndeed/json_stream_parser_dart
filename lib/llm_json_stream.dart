@@ -13,7 +13,7 @@
 /// - **Type safety**: Typed property streams for all JSON types
 /// - **Array support**: Access array elements by index and iterate dynamically
 ///
-/// ## Usage
+/// ## Quick Start
 ///
 /// ```dart
 /// import 'package:llm_json_stream/llm_json_stream.dart';
@@ -31,6 +31,17 @@
 ///   print('Age: $age');
 /// }
 /// ```
+///
+/// ## Categories
+///
+/// - **Parser**: The main [JsonStreamParser] class
+/// - **Property Streams**: [StringPropertyStream], [MapPropertyStream], [ListPropertyStream], etc.
+/// - **Observability**: [ParseEvent] and [ParseEventType] for monitoring
+/// - **Utilities**: Helper functions like [streamTextInChunks]
+///
+/// ## Documentation
+///
+/// For detailed architecture documentation, see the `doc/CONTRIBUTING/` folder.
 library;
 
 // Core parser

@@ -493,14 +493,14 @@ Contributions welcome!
 
 ### Contributor Documentation
 
-New to the codebase? Check out the **[Contributor Documentation](./docs/CONTRIBUTING/README.md)** for:
+New to the codebase? Check out the **[Contributor Documentation](./doc/CONTRIBUTING/README.md)** for:
 
-- 📐 [Architecture Overview](./docs/CONTRIBUTING/architecture-overview.md) - System design with diagrams
-- 🧩 [Core Components](./docs/CONTRIBUTING/core-components.md) - Parser, controller, and mixins
-- 🔧 [Delegates](./docs/CONTRIBUTING/delegates.md) - How each JSON type is parsed
-- 📡 [Property Streams & Controllers](./docs/CONTRIBUTING/property-streams-controllers.md) - Stream architecture
-- ⚙️ [Mechanisms](./docs/CONTRIBUTING/mechanisms.md) - Pathing, streaming, nesting systems
-- 🔄 [Data Flow](./docs/CONTRIBUTING/data-flow.md) - Complete examples with sequence diagrams
+- 📐 [Architecture Overview](./doc/CONTRIBUTING/architecture-overview.md) - System design with diagrams
+- 🧩 [Core Components](./doc/CONTRIBUTING/core-components.md) - Parser, controller, and mixins
+- 🔧 [Delegates](./doc/CONTRIBUTING/delegates.md) - How each JSON type is parsed
+- 📡 [Property Streams & Controllers](./doc/CONTRIBUTING/property-streams-controllers.md) - Stream architecture
+- ⚙️ [Mechanisms](./doc/CONTRIBUTING/mechanisms.md) - Pathing, streaming, nesting systems
+- 🔄 [Data Flow](./doc/CONTRIBUTING/data-flow.md) - Complete examples with sequence diagrams
 
 ---
 

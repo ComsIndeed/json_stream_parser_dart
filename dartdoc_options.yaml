@@ -1,0 +1,19 @@
+dartdoc:
+  categories:
+    "Parser":
+      markdown: doc/api/parser.md
+      name: Parser
+    "Property Streams":
+      markdown: doc/api/property-streams.md
+      name: Property Streams
+    "Observability":
+      markdown: doc/api/observability.md
+      name: Observability
+    "Utilities":
+      markdown: doc/api/utilities.md
+      name: Utilities
+    "Internals":
+      markdown: doc/api/internals.md
+      name: Internals
+  categoryOrder: ["Parser", "Property Streams", "Observability", "Utilities", "Internals"]
+  showUndocumentedCategories: true

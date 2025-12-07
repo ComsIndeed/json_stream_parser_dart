@@ -1,7 +1,24 @@
+/// {@category Observability}
 /// Represents a log event from the JSON stream parser.
 ///
 /// Log events provide visibility into the parsing process, including
 /// when properties start/complete parsing, errors, and other internal events.
+///
+/// ## Usage
+///
+/// ```dart
+/// final parser = JsonStreamParser(stream, onLog: (event) {
+///   print('[${event.type}] ${event.propertyPath}: ${event.message}');
+/// });
+/// ```
+///
+/// ## Properties
+///
+/// - [type] - The type of event (see [ParseEventType])
+/// - [propertyPath] - The JSON path where the event occurred
+/// - [message] - Human-readable description
+/// - [timestamp] - When the event occurred
+/// - [data] - Optional additional data
 class ParseEvent {
   /// The type of event that occurred.
   final ParseEventType type;
@@ -34,7 +51,11 @@ class ParseEvent {
   }
 }
 
+/// {@category Observability}
 /// Types of parsing events that can be logged.
+///
+/// These event types are used in [ParseEvent.type] to indicate what
+/// kind of parsing event occurred.
 enum ParseEventType {
   /// A property started being parsed.
   propertyStart,

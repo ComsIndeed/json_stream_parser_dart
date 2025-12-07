@@ -6,19 +6,8 @@ CHECKLIST.md
 journal.md
 PROJECT_STATUS.md
 
-# AI assistance documentation
-ai-summaries/
-
 # Mermaid validator (HTML file for local testing only)
-docs/CONTRIBUTING/mermaid-validator.html
-
-# Trash and temporary files
-_trash/
-
-# Debug and development files
-debug_*.dart
-show_*.dart
-todo
+doc/CONTRIBUTING/mermaid-validator.html
 
 # Git and IDE files
 .git/

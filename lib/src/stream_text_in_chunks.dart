@@ -1,9 +1,17 @@
+/// {@category Utilities}
 /// Utility function to stream text in chunks with configurable timing.
 ///
 /// This is useful for testing the parser with simulated streaming data
 /// or for processing large text files in chunks.
 ///
-/// Example:
+/// ## Parameters
+///
+/// - [text] - The complete text to stream
+/// - [chunkSize] - Number of characters per chunk
+/// - [interval] - Delay between emitting chunks
+///
+/// ## Example
+///
 /// ```dart
 /// final stream = streamTextInChunks(
 ///   text: '{"name": "John", "age": 30}',
@@ -12,6 +20,8 @@
 /// );
 ///
 /// final parser = JsonStreamParser(stream);
+/// final name = await parser.getStringProperty('name').future;
+/// print(name); // "John"
 /// ```
 Stream<String> streamTextInChunks({
   required String text,

@@ -5,11 +5,27 @@ import 'parse_event.dart';
 import 'property_stream_controller.dart';
 import 'property_getter_mixin.dart';
 
+/// {@category Property Streams}
 /// Base class for all property streams.
 ///
 /// Property streams provide access to JSON values as they are parsed from
 /// the input stream. Each property stream has a [future] that completes
 /// with the final parsed value.
+///
+/// ## Subclasses
+///
+/// - [StringPropertyStream] - For JSON string values
+/// - [NumberPropertyStream] - For JSON number values
+/// - [BooleanPropertyStream] - For JSON boolean values
+/// - [NullPropertyStream] - For JSON null values
+/// - [MapPropertyStream] - For JSON object values
+/// - [ListPropertyStream] - For JSON array values
+///
+/// ## Common API
+///
+/// All property streams provide:
+/// - [future] - Completes with the final parsed value
+/// - [onLog] - Register callbacks for parsing events
 abstract class PropertyStream<T> {
   final Future<T> _future;
 
@@ -58,12 +74,20 @@ abstract class PropertyStream<T> {
   }
 }
 
+/// {@category Property Streams}
 /// A property stream for JSON string values.
 ///
 /// Provides both a [stream] that emits string chunks as they are parsed,
 /// and a [future] that completes with the complete string value.
 ///
-/// Example:
+/// ## Streaming Behavior
+///
+/// String values are unique in that they emit **chunks** as the JSON streams in,
+/// rather than waiting for the complete value. This enables real-time text display
+/// for LLM responses.
+///
+/// ## Example
+///
 /// ```dart
 /// final titleStream = parser.getStringProperty('title');
 ///
@@ -111,10 +135,18 @@ class StringPropertyStream extends PropertyStream<String> {
   Stream<String> get stream => _replayableStreamFactory();
 }
 
+/// {@category Property Streams}
 /// A property stream for JSON number values.
 ///
 /// Provides a [future] that completes with the parsed number value.
 /// Numbers are atomic values, so the stream emits once when complete.
+///
+/// ## Example
+///
+/// ```dart
+/// final age = await parser.getNumberProperty('user.age').future;
+/// print('Age: $age');
+/// ```
 class NumberPropertyStream extends PropertyStream<num> {
   @override
   final String _propertyPath;
@@ -133,6 +165,7 @@ class NumberPropertyStream extends PropertyStream<num> {
   Stream<num> get stream => _stream;
 }
 
+/// {@category Property Streams}
 /// A property stream for JSON null values.
 ///
 /// Provides a [future] that completes with null when the null value
@@ -155,6 +188,7 @@ class NullPropertyStream extends PropertyStream<Null> {
   Stream<Null> get stream => _stream;
 }
 
+/// {@category Property Streams}
 /// A property stream for JSON boolean values.
 ///
 /// Provides a [future] that completes with the parsed boolean value.
@@ -176,6 +210,7 @@ class BooleanPropertyStream extends PropertyStream<bool> {
   Stream<bool> get stream => _stream;
 }
 
+/// {@category Property Streams}
 /// A property stream for JSON array values.
 ///
 /// Provides:
@@ -184,6 +219,8 @@ class BooleanPropertyStream extends PropertyStream<bool> {
 /// - An [unbufferedStream] that only emits new values without replay
 /// - An [onElement] callback for reacting to elements as they start parsing
 /// - Chainable property getters to access list elements
+///
+/// ## onElement Callback
 ///
 /// The [onElement] callback enables "arm the trap" behavior, firing immediately
 /// when a new array element is discovered (before it's fully parsed):
@@ -194,6 +231,14 @@ class BooleanPropertyStream extends PropertyStream<bool> {
 ///   print('Element $index started');
 ///   // Set up subscriptions for this element
 /// });
+/// ```
+///
+/// ## Accessing Elements
+///
+/// Access specific elements using bracket notation:
+/// ```dart
+/// final firstItem = parser.getMapProperty('items[0]');
+/// final secondName = parser.getStringProperty('items[1].name');
 /// ```
 class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>>
     with PropertyGetterMixin {
@@ -272,6 +317,7 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>>
   JsonStreamParserController get parserController => _parserController;
 }
 
+/// {@category Property Streams}
 /// A property stream for JSON object (map) values.
 ///
 /// Provides:
@@ -280,6 +326,8 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>>
 /// - An [unbufferedStream] that only emits new values without replay
 /// - An [onProperty] callback for reacting to properties as they start parsing
 /// - Chainable property getters to access nested properties
+///
+/// ## onProperty Callback
 ///
 /// The [onProperty] callback enables "arm the trap" behavior, firing immediately
 /// when a new object property is discovered (before it's fully parsed):
@@ -290,6 +338,15 @@ class ListPropertyStream<T extends Object?> extends PropertyStream<List<T>>
 ///   print('Property "$key" started');
 ///   // Set up subscriptions for this property
 /// });
+/// ```
+///
+/// ## Chainable Access
+///
+/// Access nested properties using the chainable API:
+/// ```dart
+/// parser.getMapProperty('user')
+///       .getStringProperty('name')
+///       .stream.listen(print);
 /// ```
 class MapPropertyStream extends PropertyStream<Map<String, Object?>>
     with PropertyGetterMixin {

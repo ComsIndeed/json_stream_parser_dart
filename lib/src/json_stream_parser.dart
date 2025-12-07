@@ -8,6 +8,7 @@ import 'property_stream.dart';
 import 'property_stream_controller.dart';
 import 'property_getter_mixin.dart';
 
+/// {@category Parser}
 /// A streaming JSON parser optimized for LLM responses.
 ///
 /// This parser processes JSON data character-by-character as it streams in,
