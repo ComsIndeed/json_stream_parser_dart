@@ -1,3 +1,7 @@
+## 0.4.4
+### Documentation
+- **Minor edits to README and API docs**
+
 ## 0.4.3
 ### Documentation
 - **Fixed broken docs**: Removed dartdoc categories that caused broken topic links on pub.dev

@@ -9,7 +9,7 @@
 [![Dart](https://img.shields.io/badge/dart-%3E%3D3.0.0-blue)]()
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](LICENSE)
 
-Parse JSON reactively as LLM responses stream in. Subscribe to properties and receive values character-by-character as they're generated—no waiting for the complete response.
+Parse JSON reactively as LLM responses stream in. Subscribe to properties and receive values chunk-by-chunk  as they're generated—no waiting for the complete response.
 
 ![Hero demo showing a Flutter app with streaming JSON properties being parsed and displayed in real-time](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/hero.gif)
 
@@ -512,7 +512,7 @@ MIT — see [LICENSE](LICENSE)
 
 <div align="center">
 
-**Made for developers building the next generation of AI-powered apps**
+**Made for Flutter developers building the next generation of AI-powered apps**
 
 [⭐ Star](https://github.com/ComsIndeed/llm_json_stream) · [📦 pub.dev](https://pub.dev/packages/llm_json_stream) · [🐛 Issues](https://github.com/ComsIndeed/llm_json_stream/issues)
 
