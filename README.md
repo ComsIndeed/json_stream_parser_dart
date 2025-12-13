@@ -11,9 +11,9 @@
 
 Parse JSON reactively as LLM responses stream in. Subscribe to properties and receive values chunk-by-chunk  as they're generated—no waiting for the complete response.
 
-![Hero demo showing a Flutter app with streaming JSON properties being parsed and displayed in real-time](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/hero.gif)
+![Hero demo showing a Flutter app with streaming JSON properties being parsed and displayed in real-time](https://raw.githubusercontent.com/ComsIndeed/llm-json-stream-dart/main/assets/demo/hero.gif)
 
-[**Live Demo**](https://comsindeed.github.io/json_stream_parser_demo/) · [**API Docs**](https://pub.dev/documentation/llm_json_stream/latest/) · [**GitHub**](https://github.com/ComsIndeed/llm_json_stream)
+[**Live Demo**](https://comsindeed.github.io/json_stream_parser_demo/) · [**API Docs**](https://pub.dev/documentation/llm_json_stream/latest/) · [**GitHub**](https://github.com/ComsIndeed/llm-json-stream-dart)
 
 </div>
 
@@ -46,7 +46,7 @@ Parse JSON reactively as LLM responses stream in. Subscribe to properties and re
 
 LLM APIs stream responses token-by-token. When the response is JSON, you get incomplete fragments:
 
-![LLM JSON chunks arriving incomplete, showing how traditional JSON parsers break on partial objects](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/problem.gif)
+![LLM JSON chunks arriving incomplete, showing how traditional JSON parsers break on partial objects](https://raw.githubusercontent.com/ComsIndeed/llm-json-stream-dart/main/assets/demo/problem.gif)
 
 **`jsonDecode()` fails on partial JSON.** Your options aren't great:
 
@@ -65,7 +65,7 @@ Instead of waiting for the entire JSON response to complete, you can:
 - Add list items to your UI the instant they begin parsing
 - Await complete values for properties that need them (like IDs or flags)
 
-![Comparison showing traditional loading vs smooth streaming](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/comparison.gif)
+![Comparison showing traditional loading vs smooth streaming](https://raw.githubusercontent.com/ComsIndeed/llm-json-stream-dart/main/assets/demo/comparison.gif)
 
 ---
 
@@ -133,7 +133,7 @@ parser.getNumberProperty('data.users[2].age')        // Deep nesting
 
 Display text as the LLM generates it, creating a smooth typing effect:
 
-![Streaming string property example](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/string-property-stream-2.gif)
+![Streaming string property example](https://raw.githubusercontent.com/ComsIndeed/llm-json-stream-dart/main/assets/demo/string-property-stream-2.gif)
 
 ```dart
 parser.getStringProperty('response').stream.listen((chunk) {
@@ -145,7 +145,7 @@ parser.getStringProperty('response').stream.listen((chunk) {
 
 An underrated but powerful feature. Add items to your UI **the instant parsing begins**—even before their content arrives:
 
-![Reactive list example](https://raw.githubusercontent.com/ComsIndeed/llm_json_stream/main/assets/demo/list-onElement-string-streams.gif)
+![Reactive list example](https://raw.githubusercontent.com/ComsIndeed/llm-json-stream-dart/main/assets/demo/list-onElement-string-streams.gif)
 
 ```dart
 parser.getListProperty('articles').onElement((article, index) {
@@ -486,7 +486,7 @@ final parser = JsonStreamParser(jsonStream);
 
 Contributions welcome!
 
-1. Check [open issues](https://github.com/ComsIndeed/llm_json_stream/issues)
+1. Check [open issues](https://github.com/ComsIndeed/llm-json-stream-dart/issues)
 2. Open an issue before major changes  
 3. Run `dart test` before submitting
 4. Match existing code style
@@ -514,6 +514,6 @@ MIT — see [LICENSE](LICENSE)
 
 **Made for Flutter developers building the next generation of AI-powered apps**
 
-[⭐ Star](https://github.com/ComsIndeed/llm_json_stream) · [📦 pub.dev](https://pub.dev/packages/llm_json_stream) · [🐛 Issues](https://github.com/ComsIndeed/llm_json_stream/issues)
+[⭐ Star](https://github.com/ComsIndeed/llm-json-stream-dart) · [📦 pub.dev](https://pub.dev/packages/llm_json_stream) · [🐛 Issues](https://github.com/ComsIndeed/llm-json-stream-dart/issues)
 
 </div>

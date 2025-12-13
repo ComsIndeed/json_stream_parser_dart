@@ -1,3 +1,7 @@
+## 0.4.5
+### Documentation
+- **Renamed repository URLs in README and docs to use `llm-json-stream-dart`**
+
 ## 0.4.4
 ### Documentation
 - **Minor edits to README and API docs**
