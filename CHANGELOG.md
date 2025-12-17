@@ -1,3 +1,7 @@
+## 0.4.7
+### Refactored
+- **Removed unused variables in JsonStreamParser**
+
 ## 0.4.6
 ### Documentation
 - **Added thinking tag skipper functionality to JsonStreamParser**
