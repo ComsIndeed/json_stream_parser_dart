@@ -486,9 +486,6 @@ class JsonStreamParser with PropertyGetterMixin {
   /// Buffer for detecting start/end tag patterns
   String _tagBuffer = '';
 
-  /// Track if we've ever been inside thinking tags (for error messages)
-  bool _wasInsideThinkingTags = false;
-
   /// Track if we've seen content that looks like potential thinking tags
   /// (when skipThoughts is false) for better error messages
   bool _sawPotentialThinkingTags = false;
@@ -739,7 +736,6 @@ class JsonStreamParser with PropertyGetterMixin {
       if (_tagBuffer.endsWith(startTag)) {
         // Found start tag! Enter thinking mode
         _insideThinkingTags = true;
-        _wasInsideThinkingTags = true;
         _tagBuffer = '';
         _emitLog(ParseEvent(
           type: ParseEventType.thinkingTagStart,

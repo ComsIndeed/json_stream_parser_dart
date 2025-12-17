@@ -639,8 +639,9 @@ Let me think about this step by step:
       test(
           'skipThoughts required when thinking content has JSON-like characters',
           () async {
-        if (verbose)
+        if (verbose) {
           print('\n[TEST] JSON-like chars in thinking need skipThoughts');
+        }
 
         // This scenario REQUIRES skipThoughts because the { in thinking
         // content will be interpreted as the start of JSON
