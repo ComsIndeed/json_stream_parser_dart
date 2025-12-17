@@ -84,4 +84,10 @@ enum ParseEventType {
 
   /// The yap filter triggered (extra text after JSON).
   yapFiltered,
+
+  /// Entered thinking/reasoning tags (when skipThoughts is enabled).
+  thinkingTagStart,
+
+  /// Exited thinking/reasoning tags (when skipThoughts is enabled).
+  thinkingTagEnd,
 }

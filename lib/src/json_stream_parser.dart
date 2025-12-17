@@ -24,6 +24,7 @@ import 'property_getter_mixin.dart';
 /// - **Dynamic list handling**: React to array elements as soon as they start arriving
 /// - **Yap filter**: Automatically stops parsing after root JSON object completes
 /// - **Observability**: Optional logging callbacks for debugging and monitoring
+/// - **Thinking tag skipper**: Optionally skip content inside thinking/reasoning tags
 ///
 /// ## Basic Usage
 ///
@@ -48,6 +49,21 @@ import 'property_getter_mixin.dart';
 /// - `'items[0].name'` - Array element property
 /// - `'data.users[2].profile.age'` - Deep nesting
 ///
+/// ## Thinking Tag Skipper
+///
+/// Many LLMs emit "thinking" or "reasoning" content before the actual JSON
+/// response, wrapped in tags like `<think>...</think>`. Set [skipThoughts]
+/// to `true` to automatically skip this content:
+///
+/// ```dart
+/// final parser = JsonStreamParser(
+///   streamFromLLM,
+///   skipThoughts: true,
+///   // Optional: customize the tags (defaults to <think> and </think>)
+///   thinkingTags: ('<reasoning>', '</reasoning>'),
+/// );
+/// ```
+///
 /// Disposal
 ///
 /// Call [dispose] when done to clean up resources:
@@ -65,6 +81,14 @@ class JsonStreamParser with PropertyGetterMixin {
   /// or array is fully parsed. This prevents issues with LLMs that add
   /// extra text after the JSON (the "yap" problem).
   ///
+  /// If [skipThoughts] is true, the parser will skip content inside thinking
+  /// tags (e.g., `<think>...</think>`). This is useful for LLMs that emit
+  /// reasoning content before the actual JSON response. Defaults to false.
+  ///
+  /// The [thinkingTags] parameter allows you to customize the start and end
+  /// delimiters for thinking tags. Defaults to `('<think>', '</think>')`.
+  /// You can set it to any pair of strings, e.g., `('[thought]', '[/thought]')`.
+  ///
   /// If [onLog] is provided, it will be called with [ParseEvent] objects
   /// for various parsing events, useful for debugging and monitoring.
   ///
@@ -72,9 +96,20 @@ class JsonStreamParser with PropertyGetterMixin {
   /// ```dart
   /// final parser = JsonStreamParser(myLLMResponseStream);
   /// ```
+  ///
+  /// Example with thinking tag skipping:
+  /// ```dart
+  /// final parser = JsonStreamParser(
+  ///   myLLMResponseStream,
+  ///   skipThoughts: true,
+  ///   thinkingTags: ('<reasoning>', '</reasoning>'),
+  /// );
+  /// ```
   JsonStreamParser(
     Stream<String> stream, {
     this.closeOnRootComplete = true,
+    this.skipThoughts = false,
+    this.thinkingTags = const ('<think>', '</think>'),
     void Function(ParseEvent)? onLog,
   })  : _stream = stream,
         _onLog = onLog {
@@ -114,6 +149,28 @@ class JsonStreamParser with PropertyGetterMixin {
   /// When false, the parser continues listening to the stream until
   /// explicitly disposed or the stream closes.
   final bool closeOnRootComplete;
+
+  /// Whether to skip content inside thinking/reasoning tags.
+  ///
+  /// When true, the parser will skip all content between the opening and
+  /// closing thinking tags (defined by [thinkingTags]). This is useful for
+  /// LLMs that emit chain-of-thought reasoning before the actual JSON.
+  ///
+  /// When false (default), thinking tags are treated as regular text, which
+  /// may cause parse errors if they appear before the JSON.
+  final bool skipThoughts;
+
+  /// The start and end delimiters for thinking tags.
+  ///
+  /// Defaults to `('<think>', '</think>')`. The parser will skip all content
+  /// between these tags when [skipThoughts] is true.
+  ///
+  /// Example custom tags:
+  /// ```dart
+  /// thinkingTags: ('[thought]', '[/thought]')
+  /// thinkingTags: ('<reasoning>', '</reasoning>')
+  /// ```
+  final (String, String) thinkingTags;
 
   /// The logging callback for this parser.
   void Function(ParseEvent)? _onLog;
@@ -422,6 +479,23 @@ class JsonStreamParser with PropertyGetterMixin {
   // * States
   PropertyDelegate? _rootDelegate;
 
+  // * Thinking tag skipper state
+  /// Whether we are currently inside thinking tags
+  bool _insideThinkingTags = false;
+
+  /// Buffer for detecting start/end tag patterns
+  String _tagBuffer = '';
+
+  /// Track if we've ever been inside thinking tags (for error messages)
+  bool _wasInsideThinkingTags = false;
+
+  /// Track if we've seen content that looks like potential thinking tags
+  /// (when skipThoughts is false) for better error messages
+  bool _sawPotentialThinkingTags = false;
+
+  /// Buffer to detect potential opening tags when skipThoughts is disabled
+  String _potentialTagBuffer = '';
+
   // * Helpers
   PropertyStreamController _getControllerForPath(String propertyPath) {
     return _propertyControllers[propertyPath]!;
@@ -456,8 +530,19 @@ class JsonStreamParser with PropertyGetterMixin {
             .toString()
             .replaceAll('PropertyStreamController', '');
         final foundTypeName = streamType.toString();
-        final error = Exception(
-            'Type mismatch at path "$propertyPath": requested $requestedTypeName but found $foundTypeName in JSON');
+
+        // Build error message with potential suggestion about thinking tags
+        var errorMessage =
+            'Type mismatch at path "$propertyPath": requested $requestedTypeName but found $foundTypeName in JSON';
+
+        // If we saw potential thinking tags, suggest enabling skipThoughts
+        if (_sawPotentialThinkingTags && !skipThoughts) {
+          errorMessage +=
+              '\n\nHint: The input may contain thinking/reasoning tags before the JSON. '
+              'Try setting skipThoughts: true in the JsonStreamParser constructor.';
+        }
+
+        final error = Exception(errorMessage);
 
         // Emit error log event
         _emitLog(ParseEvent(
@@ -529,6 +614,21 @@ class JsonStreamParser with PropertyGetterMixin {
           return;
         }
 
+        // Handle thinking tag skipping if enabled
+        if (skipThoughts) {
+          final processedChar = _processCharacterForThinkingTags(character);
+          if (processedChar == null) {
+            // Character was consumed by thinking tag logic, skip normal parsing
+            continue;
+          }
+          // If processedChar is returned, it means we should process it normally
+          // (This happens when we're not inside thinking tags)
+        } else {
+          // Even when skipThoughts is disabled, detect potential thinking tags
+          // so we can provide helpful error messages
+          _detectPotentialThinkingTags(character);
+        }
+
         if (_rootDelegate != null) {
           _rootDelegate!.addCharacter(character);
           continue;
@@ -597,6 +697,103 @@ class JsonStreamParser with PropertyGetterMixin {
       // Type mismatch or other parsing errors - already handled by completing
       // the specific controller with an error, so we just stop parsing
       return;
+    }
+  }
+
+  /// Processes a character for thinking tag detection.
+  ///
+  /// Returns `null` if the character was consumed by thinking tag logic
+  /// (either buffered for tag detection or skipped because we're inside tags).
+  /// Returns the character if it should be processed normally.
+  String? _processCharacterForThinkingTags(String character) {
+    final (startTag, endTag) = thinkingTags;
+
+    if (_insideThinkingTags) {
+      // We're inside thinking tags, looking for the end tag
+      _tagBuffer += character;
+
+      // Check if buffer ends with the end tag
+      if (_tagBuffer.endsWith(endTag)) {
+        // Found end tag! Exit thinking mode
+        _insideThinkingTags = false;
+        _tagBuffer = '';
+        _emitLog(ParseEvent(
+          type: ParseEventType.thinkingTagEnd,
+          propertyPath: '',
+          message: 'Exited thinking tags',
+        ));
+        return null; // Don't process the tag characters
+      }
+
+      // Trim buffer to avoid unbounded growth - only keep enough to detect end tag
+      if (_tagBuffer.length > endTag.length * 2) {
+        _tagBuffer = _tagBuffer.substring(_tagBuffer.length - endTag.length);
+      }
+
+      return null; // Skip this character, we're inside thinking tags
+    } else {
+      // We're outside thinking tags, looking for the start tag
+      _tagBuffer += character;
+
+      // Check if buffer ends with the start tag
+      if (_tagBuffer.endsWith(startTag)) {
+        // Found start tag! Enter thinking mode
+        _insideThinkingTags = true;
+        _wasInsideThinkingTags = true;
+        _tagBuffer = '';
+        _emitLog(ParseEvent(
+          type: ParseEventType.thinkingTagStart,
+          propertyPath: '',
+          message: 'Entered thinking tags',
+        ));
+        return null; // Don't process the tag characters
+      }
+
+      // If buffer is longer than start tag, flush old characters for processing
+      if (_tagBuffer.length > startTag.length) {
+        // Trim buffer to keep only what might be part of start tag
+        _tagBuffer = _tagBuffer.substring(_tagBuffer.length - startTag.length);
+
+        // These characters are definitely not part of a start tag, process them
+        return character;
+      }
+
+      // Buffer still building up, check if it could be a prefix of start tag
+      if (startTag.startsWith(_tagBuffer)) {
+        // Could still be building toward start tag, keep buffering
+        return null;
+      } else {
+        // Buffer doesn't match start tag prefix, process buffered chars
+        // For simplicity, since we're char-by-char, we clear buffer and pass through
+        _tagBuffer = '';
+        return character;
+      }
+    }
+  }
+
+  /// Detects potential thinking tags when skipThoughts is disabled.
+  ///
+  /// This is used to provide helpful error messages suggesting that the user
+  /// might want to enable skipThoughts if the input contains thinking tags.
+  void _detectPotentialThinkingTags(String character) {
+    // Only detect before root delegate is established
+    if (_rootDelegate != null) return;
+
+    final (startTag, _) = thinkingTags;
+
+    _potentialTagBuffer += character;
+
+    // Check if buffer ends with the start tag
+    if (_potentialTagBuffer.endsWith(startTag)) {
+      _sawPotentialThinkingTags = true;
+      _potentialTagBuffer = '';
+      return;
+    }
+
+    // Trim buffer to prevent unbounded growth
+    if (_potentialTagBuffer.length > startTag.length) {
+      _potentialTagBuffer = _potentialTagBuffer
+          .substring(_potentialTagBuffer.length - startTag.length);
     }
   }
 
