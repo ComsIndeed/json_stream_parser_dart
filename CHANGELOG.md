@@ -1,3 +1,16 @@
+## 0.4.6
+### Documentation
+- **Added thinking tag skipper functionality to JsonStreamParser**
+  - New `skipThoughts` parameter to ignore `<thinking>...</thinking>` tags in the input stream
+  - Set custom thinking tags with `thinkingTags` parameter
+  ```dart
+  final parser = JsonStreamParser(
+    stream, 
+    skipThoughts: true, // Enable thinking tag skipping
+    thinkingTags: ('<reasoning>', '</reasoning>') // Custom tags
+  );
+  ```
+
 ## 0.4.5
 ### Documentation
 - **Renamed repository URLs in README and docs to use `llm-json-stream-dart`**
